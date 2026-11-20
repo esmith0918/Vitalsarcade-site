@@ -34,7 +34,56 @@
   var ov = document.getElementById('overlay'), ovK = document.getElementById('ovKicker');
   var ovT = document.getElementById('ovTitle'), ovX = document.getElementById('ovText');
   var startBtn = document.getElementById('startBtn'), fullBtn = document.getElementById('fullBtn');
+  var eaBtn = document.getElementById('eaBtn'), muteBtn = document.getElementById('muteBtn');
+  var bestEl = document.getElementById('bestVal'), newBest = document.getElementById('newBest');
   var ZONE = 64, G, S;
+
+  /* Saved settings (high score and mute). Storage can fail in private mode, so every call is guarded. */
+  function load(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  var best = parseInt(load('aba-best', '0'), 10) || 0;
+  var muted = load('aba-muted', '0') === '1';
+  if (bestEl) bestEl.textContent = best;
+
+  /* Early Access link: paste the itch.io page link into data-url on #eaBtn in index.html.
+     The button stays hidden while data-url is empty. */
+  var eaUrl = eaBtn ? (eaBtn.getAttribute('data-url') || '').trim() : '';
+  if (eaBtn && eaUrl) eaBtn.href = eaUrl;
+
+  /* Sound effects, made with the Web Audio API (no audio files to download) */
+  var AC = null;
+  function audio() {
+    if (muted) return null;
+    if (!AC) { var C = window.AudioContext || window.webkitAudioContext; if (!C) return null; AC = new C(); }
+    if (AC.state === 'suspended') AC.resume();
+    return AC;
+  }
+  function tone(freq, dur, type, vol, slideTo, delay) {
+    var a = audio(); if (!a) return;
+    var t0 = a.currentTime + (delay || 0), o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'square'; o.frequency.setValueAtTime(freq, t0);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol || 0.08, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+  }
+  var sfx = {
+    pop: function (acid) { tone(acid ? 880 : 660, 0.09, 'square', 0.06, acid ? 1320 : 990); },
+    leak: function (acid) { tone(acid ? 160 : 220, 0.18, 'sawtooth', 0.07, acid ? 90 : 330); },
+    start: function () { [523, 659, 784].forEach(function (f, i) { tone(f, 0.1, 'square', 0.06, 0, i * 0.08); }); },
+    win: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, 0.14, 'square', 0.07, 0, i * 0.1); }); },
+    lose: function () { [392, 330, 262, 196].forEach(function (f, i) { tone(f, 0.18, 'triangle', 0.09, 0, i * 0.13); }); }
+  };
+  function setMute(m) {
+    muted = m; save('aba-muted', m ? '1' : '0');
+    if (!muteBtn) return;
+    muteBtn.setAttribute('aria-pressed', m ? 'true' : 'false');
+    muteBtn.setAttribute('aria-label', m ? 'Turn sound on' : 'Mute sound');
+    muteBtn.classList.toggle('is-muted', m);
+    var lb = muteBtn.querySelector('.mute-label'); if (lb) lb.textContent = m ? 'Sound off' : 'Sound on';
+  }
+  if (muteBtn) { setMute(muted); muteBtn.addEventListener('click', function () { setMute(!muted); if (!muted) tone(784, 0.08, 'square', 0.05); }); }
 
   function fit() {
     var r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
@@ -66,7 +115,7 @@
     var o = S.ions[i];
     S.fx.push({ kind: 'pop', x: o.x, y: o.y, t: 0, acid: o.acid });
     S.fx.push({ kind: 'text', x: o.x, y: o.y - 10, t: 0, txt: '+10', col: '#FFD166' });
-    S.ions.splice(i, 1); S.score += 10; hud();
+    S.ions.splice(i, 1); S.score += 10; hud(); sfx.pop(o.acid);
   }
   function hitAt(x, y) {
     for (var i = S.ions.length - 1; i >= 0; i--) {
@@ -87,6 +136,12 @@
   }
   function end(win) {
     S.on = false; ov.hidden = false; fullBtn.hidden = false;
+    if (eaBtn) eaBtn.hidden = !eaUrl;
+    var isBest = S.score > best;
+    if (isBest) { best = S.score; save('aba-best', String(best)); if (bestEl) bestEl.textContent = best; }
+    if (newBest) newBest.hidden = !isBest;
+    ov.classList.add('ended');
+    if (win) sfx.win(); else sfx.lose();
     ovK.textContent = win ? 'STAGE CLEAR' : 'GAME OVER';
     var inRange = S.ph >= 7.35 && S.ph <= 7.45;
     ovT.textContent = win ? (inRange ? 'Patient stable!' : 'You survived!') : (S.ph < 7.40 ? 'Severe acidosis' : 'Severe alkalosis');
@@ -110,7 +165,7 @@
       if (o.x - o.r < ZONE) {
         S.ph += o.acid ? -0.06 : 0.06;
         S.fx.push({ kind: 'text', x: ZONE + 34, y: o.y, t: 0, txt: o.acid ? '-0.06 pH' : '+0.06 pH', col: o.acid ? '#FF6978' : '#55C9F4' });
-        flash(o.acid);
+        flash(o.acid); sfx.leak(o.acid);
         S.ions.splice(i, 1);
       }
     }
@@ -173,6 +228,14 @@
   }
   function start() {
     reset(); hud(); S.on = true; ov.hidden = true; fullBtn.hidden = true;
+    if (eaBtn) eaBtn.hidden = true;
+    if (newBest) newBest.hidden = true;
+    sfx.start();
+    /* On phones, bring the whole cabinet into view so the pads are on screen */
+    if (window.innerWidth < 700 && stage.scrollIntoView) {
+      var cab = stage.closest('.cabinet') || stage;
+      cab.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+    }
     requestAnimationFrame(function (t) { S.last = t; frame(t); });
   }
 
@@ -181,8 +244,12 @@
     if (!S.on) return;
     var r = cv.getBoundingClientRect(); hitAt(e.clientX - r.left, e.clientY - r.top);
   });
-  document.getElementById('padA').addEventListener('click', function () { nearest(true); });
-  document.getElementById('padB').addEventListener('click', function () { nearest(false); });
+  /* Pads fire on pointerdown so fast taps on phones register right away (click is a fallback for keyboard users) */
+  ['padA', 'padB'].forEach(function (id) {
+    var el = document.getElementById(id), acid = id === 'padA', fired = false;
+    el.addEventListener('pointerdown', function (e) { if (e.pointerType === 'mouse' && e.button !== 0) return; fired = true; setTimeout(function () { fired = false; }, 700); nearest(acid); });
+    el.addEventListener('click', function () { if (fired) { fired = false; return; } nearest(acid); });
+  });
   document.addEventListener('keydown', function (e) {
     if (!S.on || e.target.closest('input, textarea')) return;
     var k = e.key.toLowerCase();
