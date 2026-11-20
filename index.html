@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitals Arcade | Medical science becomes playable</title>
+<meta name="description" content="Vitals Arcade makes educational games and VR science experiences. Play the free Acid-Base Arcade web demo, explore our game library and VR skills practice.">
+<meta name="theme-color" content="#08151C">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='9' fill='%23FFD166'/%3E%3Cpolyline points='7,21 13,21 16,13 20,29 24,9 27,21 33,21' fill='none' stroke='%2308151C' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header" id="top">
+  <div class="wrap header-row">
+    <a class="brand" href="index.html" aria-label="Vitals Arcade home">
+      <svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="9" fill="#FFD166"/><polyline points="7,21 13,21 16,13 20,29 24,9 27,21 33,21" fill="none" stroke="#08151C" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      <span>VITALS ARCADE</span>
+    </a>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Menu
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Main">
+      <a href="#games">Games</a>
+      <a href="#vr">VR Experiences</a>
+      <a href="#educators">Educators</a>
+      <a href="#projects">Vital Tech Projects</a>
+      <a class="nav-cta" href="#play">Play the demo</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" aria-labelledby="hero-title">
+  <svg class="hero-art" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <radialGradient id="tun" cx="72%" cy="42%" r="70%"><stop offset="0%" stop-color="#5A1A2C"/><stop offset="35%" stop-color="#2A1220"/><stop offset="100%" stop-color="#08151C"/></radialGradient>
+      <radialGradient id="hOrb" cx="35%" cy="30%" r="70%"><stop offset="0%" stop-color="#FFC2C8"/><stop offset="45%" stop-color="#FF6978"/><stop offset="100%" stop-color="#A3263A"/></radialGradient>
+      <radialGradient id="bOrb" cx="35%" cy="30%" r="70%"><stop offset="0%" stop-color="#C9EEFF"/><stop offset="45%" stop-color="#55C9F4"/><stop offset="100%" stop-color="#1D6E93"/></radialGradient>
+      <linearGradient id="scrim" x1="0" x2="1"><stop offset="0%" stop-color="#08151C"/><stop offset="45%" stop-color="#08151C" stop-opacity="0.85"/><stop offset="72%" stop-color="#08151C" stop-opacity="0"/></linearGradient>
+      <linearGradient id="fade" x1="0" x2="0" y1="0" y2="1"><stop offset="60%" stop-color="#08151C" stop-opacity="0"/><stop offset="100%" stop-color="#08151C"/></linearGradient>
+    </defs>
+    <rect width="1440" height="900" fill="url(#tun)"/>
+    <g class="rings" fill="none" stroke="#FF6978">
+      <ellipse cx="1030" cy="400" rx="40" ry="28" stroke-opacity="0.6" stroke-width="2"/>
+      <ellipse cx="1030" cy="400" rx="95" ry="66" stroke-opacity="0.45" stroke-width="2"/>
+      <ellipse cx="1030" cy="400" rx="170" ry="118" stroke-opacity="0.32" stroke-width="2"/>
+      <ellipse cx="1030" cy="400" rx="275" ry="190" stroke-opacity="0.22" stroke-width="3"/>
+      <ellipse cx="1030" cy="400" rx="420" ry="290" stroke-opacity="0.15" stroke-width="4"/>
+      <ellipse cx="1030" cy="400" rx="620" ry="430" stroke-opacity="0.1" stroke-width="6"/>
+    </g>
+    <g font-family="IBM Plex Mono, monospace" font-weight="600" text-anchor="middle">
+      <g class="float f1"><circle cx="1210" cy="270" r="62" fill="url(#hOrb)"/><text x="1210" y="282" font-size="34" fill="#3A0A14">H+</text></g>
+      <g class="float f2"><circle cx="910" cy="580" r="78" fill="url(#bOrb)"/><text x="910" y="592" font-size="30" fill="#082A3A">HCO3</text></g>
+      <g class="float f3"><circle cx="1110" cy="490" r="34" fill="url(#hOrb)"/><text x="1110" y="497" font-size="18" fill="#3A0A14">H+</text></g>
+      <g class="float f1"><circle cx="1320" cy="660" r="96" fill="url(#hOrb)"/><text x="1320" y="674" font-size="44" fill="#3A0A14">H+</text></g>
+      <circle cx="985" cy="320" r="22" fill="url(#bOrb)"/><circle cx="1160" cy="420" r="16" fill="url(#bOrb)"/><circle cx="840" cy="250" r="28" fill="url(#bOrb)" fill-opacity="0.8"/>
+    </g>
+    <rect width="1440" height="900" fill="url(#scrim)"/>
+    <rect width="1440" height="900" fill="url(#fade)"/>
+  </svg>
+  <div class="wrap hero-copy">
+    <p class="eyebrow">Your body is the ultimate game world</p>
+    <span class="badge badge-yellow">Featured · Early Access</span>
+    <h1 id="hero-title">Acid-Base<br>Arcade</h1>
+    <p class="lead">Shrink into the bloodstream and blast acid and base invaders before the pH crashes. Read the ABG, call the diagnosis.</p>
+    <ul class="chips" aria-label="Game details">
+      <li>Meta Quest · VR</li>
+      <li>Web demo · free</li>
+      <li>Topic: pH and ABGs</li>
+    </ul>
+    <div class="btn-row">
+      <a class="btn btn-yellow" href="#play"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.5 L14 8 L3 14.5 Z" fill="currentColor"/></svg>Play the web demo</a>
+      <a class="btn btn-glass" href="#games">Explore games</a>
+    </div>
+  </div>
+</section>
+
+<section class="play" id="play" aria-labelledby="play-title">
+  <div class="wrap play-grid">
+    <div class="play-info">
+      <p class="eyebrow eyebrow-green">Free web demo · 30 seconds</p>
+      <h2 id="play-title">Keep the patient's pH alive.</h2>
+      <p>Acid (H+) and base (HCO3) ions are racing toward the pH zone. Stop them before they get there. Each one that slips through pushes the blood pH out of balance.</p>
+      <ol class="how">
+        <li><b>Tap or click</b> an ion to clear it.</li>
+        <li>Or press <kbd>A</kbd> to clear the closest acid and <kbd>B</kbd> for the closest base.</li>
+        <li>Survive 30 seconds. pH of 6.80 or 7.80 ends the run.</li>
+      </ol>
+      <p class="science"><b>The real science:</b> normal blood pH is 7.35 to 7.45. Your lungs adjust acid by breathing off CO2, and your kidneys keep or remove bicarbonate. The full VR game lets you play as both.</p>
+    </div>
+
+    <div class="cabinet">
+      <div class="marquee"><span>ACID-BASE ARCADE</span><span class="marquee-sub">WEB DEMO</span></div>
+      <div class="screen">
+        <div class="hud" aria-live="polite">
+          <div class="hud-ph">
+            <span class="hud-label">BLOOD pH</span>
+            <span class="hud-ph-val" id="phVal">7.40</span>
+            <span class="hud-status" id="status">NORMAL</span>
+          </div>
+          <div class="gauge" aria-hidden="true">
+            <div class="gauge-bar"><div class="gauge-normal"></div><div class="gauge-needle" id="needle"></div></div>
+            <div class="gauge-scale"><span>6.80</span><span>7.40</span><span>7.80</span></div>
+          </div>
+          <div class="hud-stats">
+            <div><span class="hud-label">TIME</span><span class="hud-num" id="timeVal">30</span></div>
+            <div><span class="hud-label">SCORE</span><span class="hud-num" id="score">0</span></div>
+          </div>
+        </div>
+        <div class="stage" id="stage">
+          <canvas id="game" aria-label="Playfield: tap acid and base ions before they reach the pH zone on the left"></canvas>
+          <div class="overlay" id="overlay">
+            <p class="overlay-kicker" id="ovKicker">INSERT COIN</p>
+            <h3 id="ovTitle">Keep the pH alive</h3>
+            <p id="ovText">Clear the ions before they reach the pH zone. Survive 30 seconds.</p>
+            <div class="legend"><span><i class="dot dot-acid"></i>H+ acid</span><span><i class="dot dot-base"></i>HCO3 base</span></div>
+            <button class="btn btn-yellow" id="startBtn" type="button">Start game</button>
+            <a class="btn btn-glass" id="fullBtn" href="#games" hidden>See the full VR game</a>
+          </div>
+        </div>
+        <div class="pads">
+          <button class="pad pad-acid" id="padA" type="button" aria-label="Clear closest acid (A key)"><span>H+</span> Clear acid <kbd>A</kbd></button>
+          <button class="pad pad-base" id="padB" type="button" aria-label="Clear closest base (B key)"><span>HCO3</span> Clear base <kbd>B</kbd></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="games" id="games" aria-labelledby="games-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="games-title">Game library</h2>
+      <span class="mono-note">4 titles · 1 playable now</span>
+    </div>
+    <div class="game-grid">
+      <article class="game-card is-featured">
+        <div class="game-art art-acid">
+          <svg viewBox="0 0 300 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true" font-family="IBM Plex Mono, monospace" font-weight="600" text-anchor="middle"><circle cx="200" cy="60" r="44" fill="#FF6978"/><text x="200" y="69" font-size="24" fill="#3A0A14">H+</text><circle cx="96" cy="112" r="34" fill="#55C9F4"/><text x="96" y="118" font-size="15" fill="#082A3A">HCO3</text><circle cx="270" cy="140" r="18" fill="#FF6978" fill-opacity="0.7"/><circle cx="40" cy="40" r="10" fill="#55C9F4" fill-opacity="0.7"/></svg>
+          <span class="badge badge-yellow">Early Access</span>
+        </div>
+        <div class="game-body">
+          <h3>Acid-Base Arcade</h3>
+          <p>Blast acid and base invaders with the Lung Blaster and Kidney Launcher, read the ABG, and call the diagnosis.</p>
+          <dl class="meta"><dt>Learn</dt><dd>pH, ABGs, ROME</dd><dt>Play on</dt><dd>Meta Quest controllers · web demo with touch or keyboard</dd></dl>
+          <a class="btn btn-yellow btn-block" href="#play">Play the demo</a>
+        </div>
+      </article>
+      <article class="game-card">
+        <div class="game-art art-ion">
+          <svg viewBox="0 0 300 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true" font-family="IBM Plex Mono, monospace" font-weight="600" text-anchor="middle"><circle cx="180" cy="62" r="34" fill="#55C9F4"/><text x="180" y="70" font-size="20" fill="#082A3A">K+</text><circle cx="250" cy="120" r="28" fill="#39F4A1"/><text x="250" y="127" font-size="16" fill="#063A26">Na+</text><circle cx="100" cy="110" r="24" fill="#FFD166"/><text x="100" y="116" font-size="14" fill="#3A2A00">Ca</text></svg>
+          <span class="badge badge-blue">In development</span>
+        </div>
+        <div class="game-body">
+          <h3>Ion Squad</h3>
+          <p>Play as the electrolyte heroes and take down the hyper and hypo villains.</p>
+          <dl class="meta"><dt>Learn</dt><dd>Electrolytes</dd><dt>Play on</dt><dd>Meta Quest</dd></dl>
+          <span class="btn btn-disabled btn-block">Coming later</span>
+        </div>
+      </article>
+      <article class="game-card">
+        <div class="game-art art-heart">
+          <svg viewBox="0 0 300 170" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,100 60,100 74,60 90,140 106,30 120,100 190,100 204,60 220,140 236,30 250,100 300,100" fill="none" stroke="#FF6978" stroke-width="4" stroke-linejoin="round"/></svg>
+          <span class="badge badge-gray">Planned</span>
+        </div>
+        <div class="game-body">
+          <h3>Rhythm of the Heart</h3>
+          <p>A rhythm game played to ECG strips. Shock V-fib right on the beat.</p>
+          <dl class="meta"><dt>Learn</dt><dd>Cardiac rhythms</dd><dt>Play on</dt><dd>Meta Quest</dd></dl>
+          <span class="btn btn-disabled btn-block">Planned</span>
+        </div>
+      </article>
+      <article class="game-card">
+        <div class="game-art art-shift">
+          <svg viewBox="0 0 300 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect x="60" y="40" width="180" height="90" rx="10" fill="none" stroke="#FFD166" stroke-width="3"/><circle cx="100" cy="70" r="10" fill="#FF6978"/><circle cx="150" cy="70" r="10" fill="#FFD166"/><circle cx="200" cy="70" r="10" fill="#FFD166" fill-opacity="0.4"/><rect x="90" y="100" width="120" height="8" rx="4" fill="#FFD166" fill-opacity="0.5"/></svg>
+          <span class="badge badge-gray">Planned</span>
+        </div>
+        <div class="game-body">
+          <h3>Shift Change</h3>
+          <p>Juggle call lights, IV pumps and priorities on a chaotic med-surg floor.</p>
+          <dl class="meta"><dt>Learn</dt><dd>Prioritization and safety</dd><dt>Play on</dt><dd>Meta Quest</dd></dl>
+          <span class="btn btn-disabled btn-block">Planned</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="vr" id="vr" aria-labelledby="vr-title">
+  <div class="wrap vr-grid">
+    <div>
+      <p class="eyebrow eyebrow-blue">VR science experiences</p>
+      <h2 id="vr-title">Practice the skill with your own hands.</h2>
+      <p class="lead-sm">On Meta Quest, students walk up to a real-size hospital bed, open the kit and work through each step, with coaching when they need it.</p>
+    </div>
+    <ul class="vr-list">
+      <li><div><h3>Acid-Base Arcade VR</h3><p>Shoot ions inside the bloodstream</p></div><span class="badge badge-yellow">Early Access</span></li>
+      <li><div><h3>Foley Catheter Check-Off</h3><p>Sterile technique, step by step</p></div><span class="badge badge-blue">Prototype</span></li>
+      <li><div><h3>Wound Care: Wet-to-Dry Dressing</h3><p>Dressing change practice</p></div><span class="badge badge-gray">In development</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="notebook" id="educators" aria-labelledby="edu-title">
+  <svg class="torn" viewBox="0 0 1440 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0 H1440 V14 L1400 26 L1350 12 L1300 28 L1240 10 L1190 24 L1130 14 L1080 30 L1020 12 L960 26 L900 10 L850 24 L790 16 L730 30 L680 12 L620 26 L560 14 L500 28 L440 10 L390 24 L330 12 L270 30 L220 14 L160 26 L100 12 L50 28 L0 16 Z" fill="#102630"/></svg>
+  <div class="wrap">
+    <div class="edu-head">
+      <div>
+        <p class="eyebrow eyebrow-ink">For educators · Entry 002</p>
+        <h2 id="edu-title">Hard science,<br>practiced until it sticks.</h2>
+      </div>
+      <p class="handnote">replay a wave as many times as it takes</p>
+    </div>
+    <div class="edu-points">
+      <div><p class="num">01</p><h3>Low-stakes repetition</h3><p>Students can fail, restart and try again without using lab supplies or class time.</p></div>
+      <div><p class="num">02</p><h3>Concepts you can see</h3><p>pH shifts, compensation and electrolyte balance become things students watch and react to.</p></div>
+      <div><p class="num">03</p><h3>Built by a nursing student</h3><p>Every game starts from real coursework and skills lab check-offs.</p></div>
+    </div>
+    <div class="edu-bottom">
+      <figure class="ph-fig">
+        <figcaption><span>Fig. 1 · Blood pH</span><span>What Acid-Base Arcade teaches</span></figcaption>
+        <svg viewBox="0 0 600 150" role="img" aria-label="pH scale from 6.8 to 7.8 with the normal range 7.35 to 7.45 boxed" font-family="IBM Plex Mono, monospace">
+          <defs><linearGradient id="phg" x1="0" x2="1"><stop offset="0%" stop-color="#D2364A"/><stop offset="50%" stop-color="#E8EEF0"/><stop offset="100%" stop-color="#1F7FB0"/></linearGradient></defs>
+          <rect x="2" y="30" width="596" height="34" rx="4" fill="url(#phg)" stroke="#08151C" stroke-width="2"/>
+          <rect x="330" y="22" width="60" height="50" fill="none" stroke="#08151C" stroke-width="3"/>
+          <g stroke="#08151C" stroke-width="2"><line x1="2" y1="64" x2="2" y2="80"/><line x1="120" y1="64" x2="120" y2="76"/><line x1="240" y1="64" x2="240" y2="76"/><line x1="360" y1="64" x2="360" y2="82"/><line x1="480" y1="64" x2="480" y2="76"/><line x1="598" y1="64" x2="598" y2="80"/></g>
+          <g font-size="14" fill="#08151C" text-anchor="middle"><text x="16" y="100">6.8</text><text x="120" y="100">7.0</text><text x="240" y="100">7.2</text><text x="360" y="100" font-weight="600">7.4</text><text x="480" y="100">7.6</text><text x="584" y="100">7.8</text></g>
+          <text x="360" y="14" font-size="13" text-anchor="middle" fill="#08151C" font-weight="600">NORMAL 7.35 to 7.45</text>
+          <text x="2" y="135" font-size="13" fill="#B02A3D" font-weight="600">← ACIDOSIS</text>
+          <text x="598" y="135" font-size="13" fill="#1A6E99" font-weight="600" text-anchor="end">ALKALOSIS →</text>
+        </svg>
+      </figure>
+      <div class="pilot">
+        <h3>Pilot it in your skills lab</h3>
+        <p>Looking for a nursing program to try the Foley check-off prototype and share feedback.</p>
+        <a class="btn btn-ink" href="mailto:ericsmith0918@gmail.com?subject=Vitals%20Arcade%20pilot">Ask about a pilot</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="projects" id="projects" aria-labelledby="projects-title">
+  <div class="wrap projects-grid">
+    <div>
+      <p class="eyebrow eyebrow-gold">Vital Tech Projects</p>
+      <h2 id="projects-title">Beyond games: tech that helps our community.</h2>
+      <p class="lead-sm">Vitals Arcade also builds free learning projects for people who don't work in tech.</p>
+    </div>
+    <a class="project-card" href="milwaukee.html">
+      <span class="project-tag">Milwaukee community project</span>
+      <span class="project-title">Bringing Milwaukee Along</span>
+      <span class="project-text">Free and low-cost classes that teach everyday people to use AI safely, from grandparents to small business owners.</span>
+      <span class="project-link">Learn more <span aria-hidden="true">→</span></span>
+    </a>
+  </div>
+</section>
+
+<section class="about" id="about" aria-labelledby="about-title">
+  <div class="wrap about-grid">
+    <h2 id="about-title">Made by a nursing student in Milwaukee.</h2>
+    <p>Vitals Arcade started with one question: what if studying acid-base and electrolytes felt like playing an arcade game? Every game is built to make hard science stick, and to be fun even if you never open a textbook.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <p class="footer-brand">VITALS ARCADE</p>
+      <p>Medical science becomes playable. Games are study aids, not medical advice.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="#games">Games</a>
+      <a href="#vr">VR Experiences</a>
+      <a href="#educators">Educators</a>
+      <a href="milwaukee.html">Vital Tech Projects</a>
+      <a href="privacy.html">Privacy policy</a>
+      <a href="mailto:ericsmith0918@gmail.com">Contact</a>
+    </nav>
+  </div>
+  <p class="wrap copyright">&copy; <span id="yr">2026</span> Vitals Arcade, Milwaukee, Wisconsin</p>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>
