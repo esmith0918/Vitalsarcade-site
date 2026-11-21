@@ -89,14 +89,18 @@
   <div class="wrap play-grid">
     <div class="play-info">
       <p class="eyebrow eyebrow-green">Free web demo · 30 seconds</p>
-      <h2 id="play-title">Keep the patient's pH alive.</h2>
-      <p>Acid (H+) and base (HCO3) ions are racing toward the pH zone. Stop them before they get there. Each one that slips through pushes the blood pH out of balance.</p>
+      <h2 id="play-title">Keep your patient's pH in range.</h2>
+      <p>Each run starts with a real-style patient. Acid (H⁺) and base (HCO₃⁻) are flooding their blood. Stop them before they reach the pH zone, then read the ABG and name the problem.</p>
       <ol class="how">
-        <li><b>Tap or click</b> an ion to clear it.</li>
-        <li>Or press <kbd>A</kbd> to clear the closest acid and <kbd>B</kbd> for the closest base.</li>
-        <li>Survive 30 seconds. pH of 6.80 or 7.80 ends the run.</li>
+        <li><b>Tap an ion</b> to send it to the lungs or kidneys.</li>
+        <li><b>Lungs</b> (<kbd>A</kbd>) are sprinters: they breathe off acid as CO2, fast, but can't remove base.</li>
+        <li><b>Kidneys</b> (<kbd>B</kbd>) are slow but strong: when charged, they filter a batch of acid and base.</li>
+        <li>Last 30 seconds. A pH of 6.80 or 7.80 ends the run.</li>
+        <li><b>Listen:</b> a calm chime means pH is in range. A heartbeat means trouble, and it speeds up the further pH drifts.</li>
+        <li><b>Watch the ABG panel:</b> PaCO2 (lungs) and HCO3 (kidneys) move live, and pH follows the balance between them.</li>
+        <li>After the run, read the patient's ABG with ABA-BAB and name the problem.</li>
       </ol>
-      <p class="science"><b>The real science:</b> normal blood pH is 7.35 to 7.45. Your lungs adjust acid by breathing off CO2, and your kidneys keep or remove bicarbonate. The full VR game lets you play as both.</p>
+      <p class="science"><b>The real science:</b> normal arterial blood pH is 7.35 to 7.45. Within minutes your lungs adjust acid by breathing off more or less CO2, and over hours to days your kidneys excrete H⁺ and keep or release bicarbonate. The full VR game lets you play as both.</p>
     </div>
 
     <div class="cabinet">
@@ -108,9 +112,9 @@
             <span class="hud-ph-val" id="phVal">7.40</span>
             <span class="hud-status" id="status">NORMAL</span>
           </div>
-          <div class="gauge" aria-hidden="true">
-            <div class="gauge-bar"><div class="gauge-normal"></div><div class="gauge-needle" id="needle"></div></div>
-            <div class="gauge-scale"><span>6.80</span><span>7.40</span><span>7.80</span></div>
+          <div class="abg-live" id="abgLive" aria-hidden="true">
+            <div class="abg-chart" id="abgChart"></div>
+            <p class="abg-read" id="abgRead">ABA-BAB read: Normal</p>
           </div>
           <div class="hud-stats">
             <div><span class="hud-label">TIME</span><span class="hud-num" id="timeVal">30</span></div>
@@ -121,10 +125,18 @@
         <div class="stage" id="stage">
           <canvas id="game" aria-label="Playfield: tap acid and base ions before they reach the pH zone on the left"></canvas>
           <div class="overlay" id="overlay">
-            <p class="overlay-kicker" id="ovKicker">INSERT COIN</p>
-            <h3 id="ovTitle">Keep the pH alive</h3>
-            <p id="ovText">Clear the ions before they reach the pH zone. Survive 30 seconds.</p>
-            <div class="legend"><span><i class="dot dot-acid"></i>H+ acid</span><span><i class="dot dot-base"></i>HCO3 base</span></div>
+            <p class="overlay-kicker" id="ovKicker">NEW PATIENT</p>
+            <h3 id="ovTitle">Keep your patient's pH in range</h3>
+            <p id="ovText">Tap the ions before they reach the pH zone. Keep pH in range for 30 seconds.</p>
+            <div class="legend"><span><i class="dot dot-acid"></i>H⁺ acid</span><span><i class="dot dot-base"></i>HCO₃⁻ base</span></div>
+            <div class="quiz" id="quiz" hidden>
+              <p class="abg" id="quizAbg"></p>
+              <div class="abg-chart abg-chart-quiz" id="quizChart" aria-hidden="true"></div>
+              <p class="quiz-step" id="quizStep"></p>
+              <p class="quiz-q" id="quizQ">What is this patient's problem?</p>
+              <div class="quiz-opts" id="quizOpts"></div>
+              <p class="quiz-exp" id="quizExp" hidden></p>
+            </div>
             <p class="new-best" id="newBest" hidden>NEW HIGH SCORE!</p>
             <div class="overlay-btns">
               <button class="btn btn-yellow" id="startBtn" type="button">Start game</button>
@@ -134,8 +146,8 @@
           </div>
         </div>
         <div class="pads">
-          <button class="pad pad-acid" id="padA" type="button" aria-label="Clear closest acid (A key)"><span>H+</span> Clear acid <kbd>A</kbd></button>
-          <button class="pad pad-base" id="padB" type="button" aria-label="Clear closest base (B key)"><span>HCO3</span> Clear base <kbd>B</kbd></button>
+          <button class="pad pad-acid" id="padA" type="button" aria-label="Lungs: breathe off the closest acid as CO2 (A key)"><span>LUNGS</span> Breathe off acid <kbd>A</kbd></button>
+          <button class="pad pad-base" id="padB" type="button" aria-label="Kidneys: filter a batch of acid and base when charged (B key)"><span>KIDNEYS</span> Filter acid + base <kbd>B</kbd></button>
         </div>
       </div>
     </div>
@@ -157,7 +169,7 @@
         <div class="game-body">
           <h3>Acid-Base Arcade</h3>
           <p>Blast acid and base invaders with the Lung Blaster and Kidney Launcher, read the ABG, and call the diagnosis.</p>
-          <dl class="meta"><dt>Learn</dt><dd>pH, ABGs, ROME</dd><dt>Play on</dt><dd>Meta Quest controllers · web demo with touch or keyboard</dd></dl>
+          <dl class="meta"><dt>Learn</dt><dd>pH, ABGs, ABA-BAB</dd><dt>Play on</dt><dd>Meta Quest controllers · web demo with touch or keyboard</dd></dl>
           <a class="btn btn-yellow btn-block" href="#play">Play the demo</a>
         </div>
       </article>
@@ -229,7 +241,7 @@
     <div class="edu-points">
       <div><p class="num">01</p><h3>Low-stakes repetition</h3><p>Students can fail, restart and try again without using lab supplies or class time.</p></div>
       <div><p class="num">02</p><h3>Concepts you can see</h3><p>pH shifts, compensation and electrolyte balance become things students watch and react to.</p></div>
-      <div><p class="num">03</p><h3>Built from real coursework</h3><p>Every game starts from real coursework and skills lab check-offs.</p></div>
+      <div><p class="num">03</p><h3>Built from real coursework</h3><p>Every game starts from nursing coursework and skills lab check-offs, so practice matches what students are tested on.</p></div>
     </div>
     <div class="edu-bottom">
       <figure class="ph-fig">
@@ -258,14 +270,14 @@
   <div class="wrap projects-grid">
     <div>
       <p class="eyebrow eyebrow-gold">Vital Tech Projects</p>
-      <h2 id="projects-title">Beyond games: tech that helps our community.</h2>
-      <p class="lead-sm">Vitals Arcade also builds free learning projects for people who don't work in tech.</p>
+      <h2 id="projects-title">Beyond games: tech that helps people.</h2>
+      <p class="lead-sm">Vitals Arcade also supports free learning projects for people who don't work in tech.</p>
     </div>
-    <a class="project-card" href="milwaukee.html">
-      <span class="project-tag">Milwaukee community project</span>
-      <span class="project-title">Bringing Milwaukee Along</span>
-      <span class="project-text">Free and low-cost classes that teach everyday people to use AI safely, from grandparents to small business owners.</span>
-      <span class="project-link">Learn more <span aria-hidden="true">→</span></span>
+    <a class="project-card" href="https://intelligencemilwaukee.org/" target="_blank" rel="noopener">
+      <span class="project-tag">Community project</span>
+      <span class="project-title">Intelligence Milwaukee</span>
+      <span class="project-text">Free and low-cost classes that teach everyday people to use AI safely, from grandparents to small business owners. Starting in Milwaukee, built to grow anywhere.</span>
+      <span class="project-link">Visit intelligencemilwaukee.org <span aria-hidden="true">→</span></span>
     </a>
   </div>
 </section>
@@ -289,7 +301,7 @@
       <a href="#games">Games</a>
       <a href="#vr">VR Experiences</a>
       <a href="#educators">Educators</a>
-      <a href="milwaukee.html">Vital Tech Projects</a>
+      <a href="https://intelligencemilwaukee.org/" target="_blank" rel="noopener">Intelligence Milwaukee</a>
       <a href="privacy.html">Privacy policy</a>
       <a href="mailto:hello@vitalsarcade.com">Contact</a>
     </nav>
