@@ -89,14 +89,16 @@
   <div class="wrap play-grid">
     <div class="play-info">
       <p class="eyebrow eyebrow-green">Free web demo · 30 seconds</p>
-      <h2 id="play-title">Keep the patient's pH alive.</h2>
-      <p>Acid (H+) and base (HCO3) ions are racing toward the pH zone. Stop them before they get there. Each one that slips through pushes the blood pH out of balance.</p>
+      <h2 id="play-title">Keep your patient's pH in range.</h2>
+      <p>Each run starts with a real-style patient. Acid (H⁺) and base (HCO₃⁻) are flooding their blood. Stop them before they reach the pH zone, then read the ABG and name the problem.</p>
       <ol class="how">
         <li><b>Tap or click</b> an ion to clear it.</li>
         <li>Or press <kbd>A</kbd> to clear the closest acid and <kbd>B</kbd> for the closest base.</li>
-        <li>Survive 30 seconds. pH of 6.80 or 7.80 ends the run.</li>
+        <li>Last 30 seconds. A pH of 6.80 or 7.80 ends the run.</li>
+        <li><b>Listen:</b> a calm chime means pH is in range. A heartbeat means trouble, and it speeds up the further pH drifts.</li>
+        <li>After the run, read the ABG and pick the diagnosis.</li>
       </ol>
-      <p class="science"><b>The real science:</b> normal blood pH is 7.35 to 7.45. Your lungs adjust acid by breathing off CO2, and your kidneys keep or remove bicarbonate. The full VR game lets you play as both.</p>
+      <p class="science"><b>The real science:</b> normal arterial blood pH is 7.35 to 7.45. Within minutes your lungs adjust acid by breathing off more or less CO2, and over hours to days your kidneys excrete H⁺ and keep or release bicarbonate. The full VR game lets you play as both.</p>
     </div>
 
     <div class="cabinet">
@@ -121,10 +123,16 @@
         <div class="stage" id="stage">
           <canvas id="game" aria-label="Playfield: tap acid and base ions before they reach the pH zone on the left"></canvas>
           <div class="overlay" id="overlay">
-            <p class="overlay-kicker" id="ovKicker">INSERT COIN</p>
-            <h3 id="ovTitle">Keep the pH alive</h3>
-            <p id="ovText">Clear the ions before they reach the pH zone. Survive 30 seconds.</p>
-            <div class="legend"><span><i class="dot dot-acid"></i>H+ acid</span><span><i class="dot dot-base"></i>HCO3 base</span></div>
+            <p class="overlay-kicker" id="ovKicker">NEW PATIENT</p>
+            <h3 id="ovTitle">Keep your patient's pH in range</h3>
+            <p id="ovText">Tap the ions before they reach the pH zone. Keep pH in range for 30 seconds.</p>
+            <div class="legend"><span><i class="dot dot-acid"></i>H⁺ acid</span><span><i class="dot dot-base"></i>HCO₃⁻ base</span></div>
+            <div class="quiz" id="quiz" hidden>
+              <p class="abg" id="quizAbg"></p>
+              <p class="quiz-q">What is this patient's problem?</p>
+              <div class="quiz-opts" id="quizOpts"></div>
+              <p class="quiz-exp" id="quizExp" hidden></p>
+            </div>
             <p class="new-best" id="newBest" hidden>NEW HIGH SCORE!</p>
             <div class="overlay-btns">
               <button class="btn btn-yellow" id="startBtn" type="button">Start game</button>

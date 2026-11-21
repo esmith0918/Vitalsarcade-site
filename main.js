@@ -23,6 +23,8 @@
      - pH drifts back toward 7.40 at 12% of the gap per second
      - Run ends at pH 6.80 or 7.80; surviving 30 seconds wins
      - 10 points per ion cleared; spawn interval max(0.42, 0.9 - elapsed * 0.018) s
+     - Each run has a patient case that sets how often acid vs base spawns
+     - After the run the player reads the patient's ABG and picks the diagnosis
      - Ion speed 70 to 120 px/s plus 3 px/s per elapsed second */
   var cv = document.getElementById('game');
   if (!cv) return;
@@ -36,7 +38,46 @@
   var startBtn = document.getElementById('startBtn'), fullBtn = document.getElementById('fullBtn');
   var eaBtn = document.getElementById('eaBtn'), muteBtn = document.getElementById('muteBtn');
   var bestEl = document.getElementById('bestVal'), newBest = document.getElementById('newBest');
+  var quiz = document.getElementById('quiz'), quizAbg = document.getElementById('quizAbg');
+  var quizOpts = document.getElementById('quizOpts'), quizExp = document.getElementById('quizExp');
+  var legend = ov.querySelector('.legend');
   var ZONE = 64, G, S;
+
+  /* Patient cases. ABG values match the VR game and check out with the Henderson-Hasselbalch equation.
+     acid = share of incoming ions that are acid (the rest are base). */
+  var DX = ['Metabolic acidosis', 'Metabolic alkalosis', 'Respiratory acidosis', 'Respiratory alkalosis'];
+  var CASES = [
+    { who: '19-year-old, type 1 diabetes',
+      story: 'Missed insulin for 2 days. Fruity breath and deep, rapid breathing.',
+      acid: 0.8, abg: [7.24, 24, 10], dx: 0,
+      why: 'pH 7.24 is low, so it is acidosis. HCO3 10 is low too, moving the same way as pH, so it is metabolic (ROME: Metabolic Equal). Ketoacids from DKA used up the bicarbonate. The low PaCO2 is the lungs breathing off CO2 to compensate.' },
+    { who: '68-year-old with COPD',
+      story: 'Drowsy and confused. Slow, shallow breathing. SpO2 86%.',
+      acid: 0.8, abg: [7.29, 58, 26], dx: 2,
+      why: 'pH 7.29 is low, so it is acidosis. PaCO2 58 is high, moving opposite to pH, so it is respiratory (ROME: Respiratory Opposite). Slow breathing traps CO2, and CO2 turns into acid in the blood.' },
+    { who: '45-year-old, vomiting for 3 days',
+      story: 'NG tube to suction. Muscle cramps, potassium is low.',
+      acid: 0.2, abg: [7.51, 47, 36], dx: 1,
+      why: 'pH 7.51 is high, so it is alkalosis. HCO3 36 is high too, moving the same way as pH, so it is metabolic. Losing stomach acid leaves extra bicarbonate behind. The slightly high PaCO2 is the lungs slowing down to hold on to acid.' },
+    { who: '58-year-old with kidney disease',
+      story: 'Missed dialysis. Swollen ankles, potassium is high.',
+      acid: 0.8, abg: [7.26, 30, 13], dx: 0,
+      why: 'pH 7.26 is low, so it is acidosis. HCO3 13 is low too, moving the same way as pH, so it is metabolic. Failing kidneys cannot get rid of acid or make new bicarbonate. The low PaCO2 is the lungs compensating.' }
+  ];
+  var caseIdx = Math.floor(Math.random() * CASES.length), CS = CASES[caseIdx], answered = true;
+  function abgText(c) { return 'ABG: pH ' + c.abg[0].toFixed(2) + ' | PaCO2 ' + c.abg[1] + ' | HCO3 ' + c.abg[2]; }
+  function tall(on) { stage.classList.toggle('quiz-open', on); fit(); draw(0); ov.scrollTop = 0; }
+  function showIntro() {
+    reset(); hud(); tall(false);
+    ovK.textContent = 'NEW PATIENT';
+    ovT.textContent = CS.who;
+    ovX.textContent = CS.story + ' Tap the ions before they reach the pH zone. Keep pH in range for 30 seconds.';
+    if (legend) legend.hidden = false;
+    if (quiz) quiz.hidden = true;
+    startBtn.textContent = 'Start'; startBtn.hidden = false;
+    fullBtn.hidden = true; if (eaBtn) eaBtn.hidden = true; if (newBest) newBest.hidden = true;
+  }
+  function nextCase() { caseIdx = (caseIdx + 1) % CASES.length; CS = CASES[caseIdx]; }
 
   /* Saved settings (high score and mute). Storage can fail in private mode, so every call is guarded. */
   function load(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
@@ -51,10 +92,13 @@
   if (eaBtn && eaUrl) eaBtn.href = eaUrl;
 
   /* Sound effects, made with the Web Audio API (no audio files to download) */
-  var AC = null;
+  var AC = null, MASTER = null;
   function audio() {
     if (muted) return null;
-    if (!AC) { var C = window.AudioContext || window.webkitAudioContext; if (!C) return null; AC = new C(); }
+    if (!AC) {
+      var C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
+      AC = new C(); MASTER = AC.createGain(); MASTER.gain.value = 0.45; MASTER.connect(AC.destination);
+    }
     if (AC.state === 'suspended') AC.resume();
     return AC;
   }
@@ -66,15 +110,28 @@
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(vol || 0.08, t0 + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+    o.connect(g); g.connect(MASTER); o.start(t0); o.stop(t0 + dur + 0.02);
   }
+  function vary(f) { return f * (0.94 + Math.random() * 0.12); }
   var sfx = {
-    pop: function (acid) { tone(acid ? 880 : 660, 0.09, 'square', 0.06, acid ? 1320 : 990); },
-    leak: function (acid) { tone(acid ? 160 : 220, 0.18, 'sawtooth', 0.07, acid ? 90 : 330); },
-    start: function () { [523, 659, 784].forEach(function (f, i) { tone(f, 0.1, 'square', 0.06, 0, i * 0.08); }); },
-    win: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, 0.14, 'square', 0.07, 0, i * 0.1); }); },
-    lose: function () { [392, 330, 262, 196].forEach(function (f, i) { tone(f, 0.18, 'triangle', 0.09, 0, i * 0.13); }); }
+    /* Acid is a low thunk, base is a high ping, with a little pitch variation so repeats don't grate */
+    pop: function (acid) {
+      if (acid) { var f = vary(210); tone(f, 0.14, 'triangle', 0.16, f * 0.5); tone(vary(95), 0.1, 'sine', 0.12); }
+      else { var p = vary(1400); tone(p, 0.22, 'sine', 0.07); tone(p * 2, 0.12, 'sine', 0.02); }
+    },
+    /* An ion slipping through: acid drags down, base zips up */
+    leak: function (acid) { if (acid) tone(170, 0.2, 'triangle', 0.08, 90); else tone(700, 0.18, 'sine', 0.05, 1200); },
+    /* Lub-dub heartbeat (pitched high enough to hear on phone speakers) */
+    heart: function () { tone(120, 0.11, 'triangle', 0.2, 70); tone(100, 0.1, 'triangle', 0.14, 60, 0.16); },
+    /* Calm chime while pH is in the normal range */
+    chime: function () { tone(784, 0.6, 'sine', 0.035); tone(1175, 0.7, 'sine', 0.025, 0, 0.12); },
+    start: function () { [523, 659, 784].forEach(function (f, i) { tone(f, 0.12, 'sine', 0.06, 0, i * 0.09); }); },
+    win: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, 0.18, 'sine', 0.06, 0, i * 0.11); }); },
+    lose: function () { [392, 330, 262, 196].forEach(function (f, i) { tone(f, 0.22, 'triangle', 0.07, 0, i * 0.14); }); },
+    right: function () { tone(880, 0.15, 'sine', 0.05); tone(1320, 0.25, 'sine', 0.05, 0, 0.1); },
+    wrong: function () { tone(220, 0.25, 'triangle', 0.06, 180); }
   };
+
   function setMute(m) {
     muted = m; save('aba-muted', m ? '1' : '0');
     if (!muteBtn) return;
@@ -91,7 +148,7 @@
     var c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0);
     G = { c: c, w: r.width, h: r.height };
   }
-  function reset() { S = { on: false, ph: 7.40, score: 0, time: 30, ions: [], fx: [], spawn: 0, last: 0 }; }
+  function reset() { S = { on: false, ph: 7.40, score: 0, time: 30, ions: [], fx: [], spawn: 0, last: 0, hb: 0, chimeT: 5, inRange: true }; }
 
   function status(ph) {
     if (ph < 7.35) return ['ACIDOSIS', '#FF6978'];
@@ -107,7 +164,7 @@
     needle.style.left = pct + '%';
   }
   function spawn() {
-    var acid = Math.random() < 0.5, elapsed = 30 - S.time;
+    var acid = Math.random() < CS.acid, elapsed = 30 - S.time;
     S.ions.push({ acid: acid, x: G.w + 20, y: 30 + Math.random() * (G.h - 60), r: acid ? 17 : 21,
       v: 70 + Math.random() * 50 + elapsed * 3, wob: Math.random() * 6 });
   }
@@ -135,22 +192,51 @@
     stage.classList.add(acid ? 'hit-acid' : 'hit-base');
   }
   function end(win) {
-    S.on = false; ov.hidden = false; fullBtn.hidden = false;
-    if (eaBtn) eaBtn.hidden = !eaUrl;
+    S.on = false; ov.hidden = false;
     var isBest = S.score > best;
     if (isBest) { best = S.score; save('aba-best', String(best)); if (bestEl) bestEl.textContent = best; }
     if (newBest) newBest.hidden = !isBest;
     ov.classList.add('ended');
     if (win) sfx.win(); else sfx.lose();
-    ovK.textContent = win ? 'STAGE CLEAR' : 'GAME OVER';
     var inRange = S.ph >= 7.35 && S.ph <= 7.45;
-    ovT.textContent = win ? (inRange ? 'Patient stable!' : 'You survived!') : (S.ph < 7.40 ? 'Severe acidosis' : 'Severe alkalosis');
+    ovK.textContent = win ? (inRange ? 'STAGE CLEAR' : 'TIME UP') : 'GAME OVER';
+    ovT.textContent = win ? (inRange ? 'Patient stable!' : 'Still ' + (S.ph < 7.35 ? 'too acidic' : 'too alkaline'))
+                          : (S.ph < 7.40 ? 'Severe acidosis' : 'Severe alkalosis');
     ovX.textContent = (win
-      ? (inRange ? 'You kept the pH in the normal range. '
-                 : 'pH ended at ' + S.ph.toFixed(2) + ' (' + status(S.ph)[0].toLowerCase() + '). Finish between 7.35 and 7.45 for a perfect run. ')
-      : 'The pH left the survivable range. ') +
-      'Final score: ' + S.score + '. The full VR game adds blasters, patient charts and ABGs.';
-    startBtn.textContent = 'Play again';
+      ? (inRange ? 'pH ended in range. ' : 'pH ended at ' + S.ph.toFixed(2) + '. Finish between 7.35 and 7.45 to stabilize. ')
+      : 'Critical pH. Values this extreme are often fatal. ') + 'Score: ' + S.score + '.';
+    askQuiz();
+  }
+  /* After each run: read the patient's ABG and pick the problem */
+  function askQuiz() {
+    answered = false;
+    startBtn.hidden = true; fullBtn.hidden = true; if (eaBtn) eaBtn.hidden = true;
+    quizAbg.textContent = abgText(CS);
+    quizExp.hidden = true; quizExp.textContent = '';
+    quizOpts.innerHTML = '';
+    DX.forEach(function (label, i) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'quiz-opt'; b.textContent = label;
+      b.addEventListener('click', function () { answer(i); });
+      quizOpts.appendChild(b);
+    });
+    quiz.hidden = false; tall(true);
+    var first = quizOpts.querySelector('button'); if (first) first.focus();
+  }
+  function answer(i) {
+    if (answered) return;
+    answered = true;
+    var right = i === CS.dx, btns = quizOpts.querySelectorAll('button');
+    btns.forEach(function (b, k) {
+      b.disabled = true;
+      if (k === CS.dx) b.classList.add('is-right');
+      else if (k === i) b.classList.add('is-wrong');
+    });
+    if (right) sfx.right(); else sfx.wrong();
+    quizExp.textContent = (right ? 'Correct! ' : 'Not quite. It is ' + DX[CS.dx].toLowerCase() + '. ') + CS.why;
+    quizExp.hidden = false;
+    startBtn.textContent = 'Next patient'; startBtn.hidden = false;
+    fullBtn.hidden = false; if (eaBtn) eaBtn.hidden = !eaUrl;
     startBtn.focus();
   }
   function frame(ts) {
@@ -160,6 +246,7 @@
     var rate = Math.max(0.42, 0.9 - (30 - S.time) * 0.018);
     if (S.spawn <= 0) { spawn(); S.spawn = rate; }
     S.ph += (7.40 - S.ph) * 0.12 * dt;
+    soundscape(dt);
     for (var i = S.ions.length - 1; i >= 0; i--) {
       var o = S.ions[i]; o.x -= o.v * dt; o.wob += dt * 3;
       if (o.x - o.r < ZONE) {
@@ -175,6 +262,20 @@
     if (S.ph <= 6.80 || S.ph >= 7.80) return end(false);
     if (S.time <= 0) return end(true);
     requestAnimationFrame(frame);
+  }
+  /* Heartbeat speeds up the further pH leaves 7.35 to 7.45; a calm chime plays while it stays in range */
+  function soundscape(dt) {
+    var inR = S.ph >= 7.35 && S.ph <= 7.45;
+    if (inR) {
+      if (!S.inRange) { sfx.chime(); S.chimeT = 5; }
+      S.chimeT -= dt; if (S.chimeT <= 0) { sfx.chime(); S.chimeT = 5; }
+      S.hb = 0;
+    } else {
+      var d = S.ph < 7.35 ? (7.35 - S.ph) / 0.55 : (S.ph - 7.45) / 0.35;
+      var bpm = 80 + 100 * Math.min(1, d);
+      S.hb -= dt; if (S.hb <= 0) { sfx.heart(); S.hb = 60 / bpm; }
+    }
+    S.inRange = inR;
   }
   function draw(ts) {
     var c = G.c, w = G.w, h = G.h, t = (ts || 0) / 1000;
@@ -208,7 +309,7 @@
       c.fillStyle = o.acid ? '#3A0A14' : '#082A3A';
       c.font = '700 ' + (o.acid ? 13 : 11) + 'px "IBM Plex Mono", monospace';
       c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillText(o.acid ? 'H+' : 'HCO3', o.x, y + 1);
+      c.fillText(o.acid ? 'H+' : 'HCO3-', o.x, y + 1);
     });
     // effects
     S.fx.forEach(function (f) {
@@ -230,6 +331,7 @@
     reset(); hud(); S.on = true; ov.hidden = true; fullBtn.hidden = true;
     if (eaBtn) eaBtn.hidden = true;
     if (newBest) newBest.hidden = true;
+    if (quiz) quiz.hidden = true;
     sfx.start();
     /* On phones, bring the whole cabinet into view so the pads are on screen */
     if (window.innerWidth < 700 && stage.scrollIntoView) {
@@ -239,7 +341,10 @@
     requestAnimationFrame(function (t) { S.last = t; frame(t); });
   }
 
-  startBtn.addEventListener('click', start);
+  startBtn.addEventListener('click', function () {
+    if (answered && ov.classList.contains('ended')) { nextCase(); ov.classList.remove('ended'); showIntro(); return; }
+    start();
+  });
   cv.addEventListener('pointerdown', function (e) {
     if (!S.on) return;
     var r = cv.getBoundingClientRect(); hitAt(e.clientX - r.left, e.clientY - r.top);
@@ -260,5 +365,5 @@
   window.addEventListener('resize', function () {
     clearTimeout(rt); rt = setTimeout(function () { fit(); if (!S.on) draw(0); }, 120);
   });
-  reset(); fit(); hud(); draw(0);
+  reset(); fit(); hud(); draw(0); showIntro();
 })();
