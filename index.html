@@ -100,7 +100,7 @@
     </div>
 
     <div class="cabinet">
-      <div class="marquee"><span>ACID-BASE ARCADE</span><span class="marquee-sub">WEB DEMO</span></div>
+      <div class="marquee"><span>ACID-BASE ARCADE</span><span class="marquee-right"><span class="marquee-sub">WEB DEMO</span><button class="mute-btn" id="muteBtn" type="button" aria-pressed="false" aria-label="Mute sound"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="snd-on" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="snd-off" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="mute-label">Sound on</span></button></span></div>
       <div class="screen">
         <div class="hud" aria-live="polite">
           <div class="hud-ph">
@@ -115,6 +115,7 @@
           <div class="hud-stats">
             <div><span class="hud-label">TIME</span><span class="hud-num" id="timeVal">30</span></div>
             <div><span class="hud-label">SCORE</span><span class="hud-num" id="score">0</span></div>
+            <div><span class="hud-label">BEST</span><span class="hud-num hud-best" id="bestVal">0</span></div>
           </div>
         </div>
         <div class="stage" id="stage">
@@ -124,8 +125,12 @@
             <h3 id="ovTitle">Keep the pH alive</h3>
             <p id="ovText">Clear the ions before they reach the pH zone. Survive 30 seconds.</p>
             <div class="legend"><span><i class="dot dot-acid"></i>H+ acid</span><span><i class="dot dot-base"></i>HCO3 base</span></div>
-            <button class="btn btn-yellow" id="startBtn" type="button">Start game</button>
-            <a class="btn btn-glass" id="fullBtn" href="#games" hidden>See the full VR game</a>
+            <p class="new-best" id="newBest" hidden>NEW HIGH SCORE!</p>
+            <div class="overlay-btns">
+              <button class="btn btn-yellow" id="startBtn" type="button">Start game</button>
+              <a class="btn btn-mint" id="eaBtn" data-url="" href="#" target="_blank" rel="noopener" hidden>Get Early Access</a>
+              <a class="btn btn-glass" id="fullBtn" href="#games" hidden>See the full VR game</a>
+            </div>
           </div>
         </div>
         <div class="pads">
