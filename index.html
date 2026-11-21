@@ -97,7 +97,8 @@
         <li><b>Kidneys</b> (<kbd>B</kbd>) are slow but strong: when charged, they filter a batch of acid and base.</li>
         <li>Last 30 seconds. A pH of 6.80 or 7.80 ends the run.</li>
         <li><b>Listen:</b> a calm chime means pH is in range. A heartbeat means trouble, and it speeds up the further pH drifts.</li>
-        <li>After the run, read the ABG and pick the diagnosis.</li>
+        <li><b>Watch the ABG panel:</b> PaCO2 (lungs) and HCO3 (kidneys) move live, and pH follows the balance between them.</li>
+        <li>After the run, read the patient's ABG with ABA-BAB and name the problem.</li>
       </ol>
       <p class="science"><b>The real science:</b> normal arterial blood pH is 7.35 to 7.45. Within minutes your lungs adjust acid by breathing off more or less CO2, and over hours to days your kidneys excrete H⁺ and keep or release bicarbonate. The full VR game lets you play as both.</p>
     </div>
@@ -111,9 +112,9 @@
             <span class="hud-ph-val" id="phVal">7.40</span>
             <span class="hud-status" id="status">NORMAL</span>
           </div>
-          <div class="gauge" aria-hidden="true">
-            <div class="gauge-bar"><div class="gauge-normal"></div><div class="gauge-needle" id="needle"></div></div>
-            <div class="gauge-scale"><span>6.80</span><span>7.40</span><span>7.80</span></div>
+          <div class="abg-live" id="abgLive" aria-hidden="true">
+            <div class="abg-chart" id="abgChart"></div>
+            <p class="abg-read" id="abgRead">ABA-BAB read: Normal</p>
           </div>
           <div class="hud-stats">
             <div><span class="hud-label">TIME</span><span class="hud-num" id="timeVal">30</span></div>
@@ -130,7 +131,9 @@
             <div class="legend"><span><i class="dot dot-acid"></i>H⁺ acid</span><span><i class="dot dot-base"></i>HCO₃⁻ base</span></div>
             <div class="quiz" id="quiz" hidden>
               <p class="abg" id="quizAbg"></p>
-              <p class="quiz-q">What is this patient's problem?</p>
+              <div class="abg-chart abg-chart-quiz" id="quizChart" aria-hidden="true"></div>
+              <p class="quiz-step" id="quizStep"></p>
+              <p class="quiz-q" id="quizQ">What is this patient's problem?</p>
               <div class="quiz-opts" id="quizOpts"></div>
               <p class="quiz-exp" id="quizExp" hidden></p>
             </div>
@@ -166,7 +169,7 @@
         <div class="game-body">
           <h3>Acid-Base Arcade</h3>
           <p>Blast acid and base invaders with the Lung Blaster and Kidney Launcher, read the ABG, and call the diagnosis.</p>
-          <dl class="meta"><dt>Learn</dt><dd>pH, ABGs, ROME</dd><dt>Play on</dt><dd>Meta Quest controllers · web demo with touch or keyboard</dd></dl>
+          <dl class="meta"><dt>Learn</dt><dd>pH, ABGs, ABA-BAB</dd><dt>Play on</dt><dd>Meta Quest controllers · web demo with touch or keyboard</dd></dl>
           <a class="btn btn-yellow btn-block" href="#play">Play the demo</a>
         </div>
       </article>

@@ -25,14 +25,24 @@
      - 10 points per ion cleared; spawn interval max(0.42, 0.9 - elapsed * 0.018) s
      - Each run has a patient case that sets how often acid vs base spawns
      - After the run the player reads the patient's ABG and picks the diagnosis
-     - Ion speed 70 to 120 px/s plus 3 px/s per elapsed second */
+     - Ion speed 70 to 120 px/s plus 3 px/s per elapsed second
+     ABG panel (ABA-BAB, ATI ranges: pH 7.35-7.45, PaCO2 35-45, HCO3 22-26):
+     - pH = 7.40 + m - r, where HCO3 = 24 x 10^m and PaCO2 = 40 x 10^r.
+       This is Henderson-Hasselbalch (pH = 6.1 + log(HCO3 / (0.03 x PaCO2))) centered on 24 and 40,
+       so every ion still moves pH by exactly 0.06 and the balance above is unchanged.
+     - Acid that slips through uses up HCO3 (metabolic cases) or stays as CO2 (respiratory cases).
+       Base that slips through raises HCO3.
+     - The pH drift back toward 7.40 is compensation by the OTHER organ:
+       metabolic problem -> lungs change PaCO2; respiratory problem -> kidneys change HCO3.
+       (Real kidney compensation takes hours to days; the game compresses it into seconds.) */
   var cv = document.getElementById('game');
   if (!cv) return;
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var stage = document.getElementById('stage');
   var phEl = document.getElementById('phVal'), stEl = document.getElementById('status');
   var scEl = document.getElementById('score'), tEl = document.getElementById('timeVal');
-  var needle = document.getElementById('needle');
+  var abgChartEl = document.getElementById('abgChart'), abgRead = document.getElementById('abgRead');
+  var quizChartEl = document.getElementById('quizChart'), quizStep = document.getElementById('quizStep'), quizQ = document.getElementById('quizQ');
   var ov = document.getElementById('overlay'), ovK = document.getElementById('ovKicker');
   var ovT = document.getElementById('ovTitle'), ovX = document.getElementById('ovText');
   var startBtn = document.getElementById('startBtn'), fullBtn = document.getElementById('fullBtn');
@@ -62,20 +72,117 @@
     { who: '19-year-old, type 1 diabetes',
       story: 'Missed insulin for 2 days. Fruity breath and deep, rapid breathing.',
       acid: 0.8, abg: [7.24, 24, 10], dx: 0, lung: 0.15, kid: 3, batch: 4, breath: 0.9,
-      why: 'pH 7.24 is low, so it is acidosis. HCO3 10 is low too, moving the same way as pH, so it is metabolic (ROME: Metabolic Equal). Ketoacids from DKA used up the bicarbonate. You saw the lungs racing: that deep, fast Kussmaul breathing blows off CO2, which is why PaCO2 is low.' },
+      why: 'pH 7.24 is on the A side: acidosis. HCO3 10 is below 22, also on its A side, so HCO3 matches pH: metabolic. PaCO2 24 is below 35, on its B side, so the lungs are fighting back: partially compensated. Ketoacids from DKA used up the bicarbonate, and the deep, fast Kussmaul breathing you saw blew off CO2.' },
     { who: '68-year-old with COPD',
       story: 'Drowsy and confused. Slow, shallow breathing. SpO2 86%.',
-      acid: 0.75, abg: [7.29, 58, 26], dx: 2, lung: 0.8, kid: 3, batch: 4, breath: 0.15, weakLungs: true,
-      why: 'pH 7.29 is low, so it is acidosis. PaCO2 58 is high, moving opposite to pH, so it is respiratory (ROME: Respiratory Opposite). You felt it: the lungs were slow, so CO2 stayed in and turned into acid. The kidneys help, but they take hours to days.' },
+      acid: 0.75, abg: [7.29, 58, 26], dx: 2, lung: 0.8, kid: 3, batch: 4, breath: 0.15, weakLungs: true, resp: true,
+      why: 'pH 7.29 is on the A side: acidosis. PaCO2 58 is above 45, on its A side, so PaCO2 matches pH: respiratory. HCO3 26 is still inside 22 to 26, so the kidneys have not caught up yet: uncompensated. The slow, weak lungs kept CO2 in, and CO2 turns into acid. The kidneys can raise HCO3, but in real life that takes hours to days.' },
     { who: '45-year-old, vomiting for 3 days',
       story: 'NG tube to suction. Muscle cramps, potassium is low.',
       acid: 0.25, abg: [7.51, 47, 36], dx: 1, lung: 0.15, kid: 2.6, batch: 6, breath: 0.2,
-      why: 'pH 7.51 is high, so it is alkalosis. HCO3 36 is high too, moving the same way as pH, so it is metabolic. Losing stomach acid leaves extra bicarbonate. Only the kidneys can get rid of bicarbonate, and dehydration and low potassium make them hold on to it. The lungs breathe a little slower to keep CO2, which is why PaCO2 is slightly high.' },
+      why: 'pH 7.51 is on the B side: alkalosis. HCO3 36 is above 26, on its B side, so HCO3 matches pH: metabolic. PaCO2 47 is above 45, on its A side, so the lungs are fighting back by breathing slower to hold CO2: partially compensated. Losing stomach acid left extra bicarbonate, and low potassium and dehydration make the kidneys hold on to it.' },
     { who: '58-year-old with kidney disease',
       story: 'Missed dialysis. Swollen ankles, potassium is high.',
       acid: 0.8, abg: [7.26, 30, 13], dx: 0, lung: 0.15, kid: 5, batch: 3, breath: 0.45, weakKidneys: true,
-      why: 'pH 7.26 is low, so it is acidosis. HCO3 13 is low too, moving the same way as pH, so it is metabolic. You saw the kidneys struggle: failing kidneys cannot get rid of acid or make new bicarbonate. The lungs did extra work, which is why PaCO2 is low.' }
+      why: 'pH 7.26 is on the A side: acidosis. HCO3 13 is below 22, on its A side, so HCO3 matches pH: metabolic. PaCO2 30 is below 35, on its B side, so the lungs are fighting back: partially compensated. Failing kidneys cannot get rid of acid or make new bicarbonate, so the lungs did the extra work you saw.' }
   ];
+  /* ===== ABA-BAB =====
+     Each row has a low side, a normal zone and a high side. Reading the letters down the low side gives A-B-A,
+     down the high side B-A-B. PaCO2 is flipped because more CO2 means more acid. */
+  var ROWS = [
+    { k: 'ph', name: 'pH', lo: 7.35, hi: 7.45, mid: 7.40, min: 6.80, max: 7.80, L: 'A', R: 'B', dp: 2 },
+    { k: 'co2', name: 'PaCO2', lo: 35, hi: 45, mid: 40, min: 15, max: 80, L: 'B', R: 'A', dp: 0 },
+    { k: 'hco3', name: 'HCO3', lo: 22, hi: 26, mid: 24, min: 6, max: 50, L: 'A', R: 'B', dp: 0 }
+  ];
+  /* Normal zone fills the middle 40-60% of each bar; each side scales on its own so the zone stays centered */
+  function pct(R, v) {
+    if (v < R.lo) return Math.max(0, (v - R.min) / (R.lo - R.min) * 40);
+    if (v > R.hi) return Math.min(100, 60 + (v - R.hi) / (R.max - R.hi) * 40);
+    return 40 + (v - R.lo) / (R.hi - R.lo) * 20;
+  }
+  function side(R, v) { return v < R.lo ? R.L : v > R.hi ? R.R : 'N'; }
+  /* Classify an ABG with ABA-BAB. Values are the rounded numbers the player sees. */
+  function classify(ph, co2, hco3) {
+    var sp = side(ROWS[0], ph), sc = side(ROWS[1], co2), sh = side(ROWS[2], hco3);
+    var out = { sides: { ph: sp, co2: sc, hco3: sh }, match: null, cause: '', kind: '', comp: '', label: '' };
+    var letter = sp;
+    if (sp === 'N') {
+      if (sc === 'N' && sh === 'N') { out.label = 'Normal'; return out; }
+      if (ph === 7.40) { out.label = 'pH 7.40, right on the center line'; return out; }
+      letter = ph < 7.40 ? 'A' : 'B'; /* full compensation: the side of 7.40 tells you the original problem */
+    }
+    var mc = sc === letter, mh = sh === letter;
+    if (mc && mh) { out.match = 'both'; out.label = 'Combined respiratory and metabolic ' + (letter === 'A' ? 'acidosis' : 'alkalosis'); return out; }
+    if (!mc && !mh) { out.label = 'Not a clear pattern yet'; return out; }
+    out.match = mc ? 'co2' : 'hco3';
+    out.cause = mc ? 'Respiratory' : 'Metabolic';
+    out.kind = letter === 'A' ? 'acidosis' : 'alkalosis';
+    var other = mc ? sh : sc;
+    out.comp = sp === 'N' ? 'Fully compensated' : other === 'N' ? 'Uncompensated' : 'Partially compensated';
+    out.label = out.comp + ' ' + out.cause.toLowerCase() + ' ' + out.kind;
+    return out;
+  }
+  function makeChart(el) {
+    if (!el) return null;
+    var rows = {};
+    ROWS.forEach(function (R) {
+      var row = document.createElement('div'); row.className = 'abg-row';
+      var lc = R.L === 'A' ? 'var(--acid)' : 'var(--base)', rc = R.R === 'A' ? 'var(--acid)' : 'var(--base)';
+      row.innerHTML = '<span class="abg-name">' + R.name + '</span>' +
+        '<span class="abg-l abg-' + R.L.toLowerCase() + '">' + R.L + '</span>' +
+        '<div class="abg-bar" style="--lc:' + lc + ';--rc:' + rc + '"><div class="abg-norm"></div><div class="abg-mid"></div><div class="abg-mark"></div><span class="abg-tag"></span></div>' +
+        '<span class="abg-r abg-' + R.R.toLowerCase() + '">' + R.R + '</span>' +
+        '<span class="abg-val"></span>';
+      el.appendChild(row);
+      rows[R.k] = { el: row, mark: row.querySelector('.abg-mark'), val: row.querySelector('.abg-val'),
+        l: row.querySelector('.abg-l'), r: row.querySelector('.abg-r'), tag: row.querySelector('.abg-tag'), timer: 0 };
+    });
+    return {
+      rows: rows,
+      set: function (v) { /* v = { ph, co2, hco3 } as displayed (rounded) numbers */
+        ROWS.forEach(function (R) {
+          var o = rows[R.k], x = v[R.k];
+          o.mark.style.left = pct(R, x) + '%';
+          o.val.textContent = x.toFixed(R.dp);
+          o.l.classList.toggle('on', x < R.lo); o.r.classList.toggle('on', x > R.hi);
+        });
+      },
+      flash: function (k, txt, col) {
+        var o = rows[k]; if (!o) return;
+        o.tag.textContent = txt; o.tag.style.color = col || 'var(--highlight)';
+        o.el.classList.add('pulse'); clearTimeout(o.timer);
+        o.timer = setTimeout(function () { o.el.classList.remove('pulse'); }, 650);
+      },
+      match: function (k) { ROWS.forEach(function (R) { rows[R.k].el.classList.toggle('match', k === R.k || (k === 'both' && R.k !== 'ph')); }); }
+    };
+  }
+  var LIVE = makeChart(abgChartEl), QCH = makeChart(quizChartEl);
+  /* Live blood values from the two levers: m (metabolic, kidneys) and r (respiratory, lungs) */
+  function liveVals() {
+    return { ph: Math.round(S.ph * 100) / 100, co2: Math.round(40 * Math.pow(10, S.r)), hco3: Math.round(24 * Math.pow(10, S.m)) };
+  }
+  /* How far compensation can push each value. Breathing can drop PaCO2 to about 15, but slowing breathing
+     only raises it to about 55 before low oxygen stops it. Kidneys can move HCO3 to about 6 or 50. */
+  var LIM = { rLo: Math.log10(15 / 40), rHi: Math.log10(55 / 40), mLo: Math.log10(6 / 24), mHi: Math.log10(50 / 24) };
+  /* Move v by d but never past a limit (and never snap back if v is already past it) */
+  function step(v, d, lo, hi) {
+    var n = v + d;
+    if (d > 0 && n > hi) n = Math.max(v, hi);
+    if (d < 0 && n < lo) n = Math.min(v, lo);
+    return n;
+  }
+  /* Compensation: move pH back toward 7.40 by d using the organ that is NOT the problem.
+     If that organ is at its limit, the rest goes to the other one, so total drift matches the original game. */
+  function compensate(d) {
+    if (CS.resp) {
+      var m2 = step(S.m, d, LIM.mLo, LIM.mHi), left = d - (m2 - S.m); S.m = m2;
+      if (left) S.r = step(S.r, -left, LIM.rLo, LIM.rHi);
+    } else {
+      var r2 = step(S.r, -d, LIM.rLo, LIM.rHi), rest = d + (r2 - S.r); S.r = r2;
+      if (rest) S.m = step(S.m, rest, LIM.mLo, LIM.mHi);
+    }
+    S.ph = 7.40 + S.m - S.r;
+  }
   var caseIdx = Math.floor(Math.random() * CASES.length), CS = CASES[caseIdx], answered = true;
   function abgText(c) { return 'ABG when the patient arrived: pH ' + c.abg[0].toFixed(2) + ' | PaCO2 ' + c.abg[1] + ' | HCO3 ' + c.abg[2]; }
   function tall(on) { stage.classList.toggle('quiz-open', on); fit(); draw(0); ov.scrollTop = 0; }
@@ -160,7 +267,7 @@
     var c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0);
     G = { c: c, w: r.width, h: r.height };
   }
-  function reset() { S = { on: false, ph: 7.40, score: 0, time: 30, ions: [], fx: [], spawn: 0, last: 0, hb: 0, chimeT: 5, inRange: true, lungCd: 0, kid: 0 }; }
+  function reset() { S = { on: false, ph: 7.40, m: 0, r: 0, score: 0, time: 30, ions: [], fx: [], spawn: 0, last: 0, hb: 0, chimeT: 5, inRange: true, lungCd: 0, kid: 0 }; }
 
   function status(ph) {
     if (ph < 7.35) return ['ACIDOSIS', '#FF6978'];
@@ -172,8 +279,13 @@
     var s = status(S.ph); stEl.textContent = s[0]; stEl.style.color = s[1];
     scEl.textContent = S.score;
     tEl.textContent = Math.max(0, Math.ceil(S.time));
-    var pct = Math.min(100, Math.max(0, (S.ph - 6.80) / 1.0 * 100));
-    needle.style.left = pct + '%';
+    var v = liveVals();
+    if (LIVE) LIVE.set(v);
+    if (abgRead) {
+      var c = classify(v.ph, v.co2, v.hco3);
+      var txt = 'ABA-BAB read: ' + c.label;
+      if (abgRead.textContent !== txt) abgRead.textContent = txt;
+    }
   }
   function spawn() {
     var acid = Math.random() < CS.acid, elapsed = 30 - S.time;
@@ -193,6 +305,7 @@
   function useLungs(i) {
     if (S.lungCd > 0) { note('Lungs catching their breath', lungPos()); return; }
     remove(i, 'lungs'); S.lungCd = CS.lung; hud(); sfx.pop(true);
+    if (LIVE) LIVE.flash('co2', 'CO2 breathed off', '#39F4A1');
   }
   function useKidneys(first) {
     if (!kidReady()) { note('Kidneys still filtering', kidPos()); return; }
@@ -204,6 +317,7 @@
     var anyBase = pick.some(function (i) { return !S.ions[i].acid; });
     pick.forEach(function (i) { remove(i, 'kidneys'); });
     S.kid = 0; hud(); sfx.pop(!anyBase);
+    if (LIVE) LIVE.flash('hco3', 'Kidneys filtered', '#FFD166');
     var k = kidPos(); S.fx.push({ kind: 'text', x: k.x + 70, y: k.y, t: 0, txt: 'Filtered x' + pick.length, col: '#FFD166' });
   }
   function note(txt, p) {
@@ -249,37 +363,81 @@
       : 'Critical pH. Values this extreme are often fatal. ') + 'Score: ' + S.score + '.';
     askQuiz();
   }
-  /* After each run: read the patient's ABG and pick the problem */
+  /* After each run: read the patient's arrival ABG with ABA-BAB in three steps:
+     1. which value matches the pH, 2. the problem, 3. how compensated it is. */
+  var COMP = ['Uncompensated', 'Partially compensated', 'Fully compensated'];
+  var Q = null;
   function askQuiz() {
     answered = false;
     startBtn.hidden = true; fullBtn.hidden = true; if (eaBtn) eaBtn.hidden = true;
     quizAbg.textContent = abgText(CS);
+    var c = classify(CS.abg[0], CS.abg[1], CS.abg[2]);
+    if (QCH) { QCH.set({ ph: CS.abg[0], co2: CS.abg[1], hco3: CS.abg[2] }); QCH.match(null); }
+    var R = { co2: ROWS[1], hco3: ROWS[2] }, pl = c.sides.ph;
+    function sideWord(L) { return L === 'A' ? 'A side' : 'B side'; }
+    var mk = c.match, mv = mk === 'co2' ? CS.abg[1] : CS.abg[2], mn = mk === 'co2' ? 'PaCO2' : 'HCO3';
+    var ok = mk === 'co2' || mk === 'hco3';
+    Q = { i: 0, right: 0, steps: [] };
+    if (ok) Q.steps.push({
+      q: 'Which value matches the pH?', opts: ['PaCO2', 'HCO3'], ans: mk === 'co2' ? 0 : 1, cls: 'two', keepCase: true,
+      fb: 'pH ' + CS.abg[0].toFixed(2) + ' is on the ' + sideWord(pl) + '. ' + mn + ' ' + mv + ' is on its ' + sideWord(c.sides[mk]) +
+          ' too, so ' + mn + ' matches: ' + c.cause.toLowerCase() + '.',
+      after: function () { if (QCH) QCH.match(mk); }
+    });
+    Q.steps.push({ q: "What is this patient's problem?", opts: DX, ans: CS.dx, cls: '',
+      fb: ok ? 'pH on the ' + sideWord(pl === 'N' ? (CS.abg[0] < 7.40 ? 'A' : 'B') : pl) + ' means ' + c.kind + ', and ' + mn + ' matching makes it ' + c.cause.toLowerCase() + '.' : '' });
+    if (ok) Q.steps.push({
+      q: 'How compensated is it?', opts: COMP, ans: COMP.indexOf(c.comp), cls: 'three',
+      fb: c.comp === 'Uncompensated' ? 'The other value is still in its normal zone, so nothing is fighting back yet.'
+        : c.comp === 'Partially compensated' ? 'The other value has left its normal zone to fight back, but pH is still out of range.'
+        : 'Both values are out of range but pH made it back into 7.35 to 7.45.'
+    });
     quizExp.hidden = true; quizExp.textContent = '';
+    quiz.hidden = false; tall(true);
+    showStep();
+  }
+  function showStep() {
+    var st = Q.steps[Q.i];
+    if (quizStep) quizStep.textContent = 'ABA-BAB · STEP ' + (Q.i + 1) + ' OF ' + Q.steps.length;
+    if (quizQ) quizQ.textContent = st.q;
+    quizOpts.className = 'quiz-opts' + (st.cls ? ' ' + st.cls : '');
     quizOpts.innerHTML = '';
-    DX.forEach(function (label, i) {
+    st.opts.forEach(function (label, i) {
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'quiz-opt'; b.textContent = label;
       b.addEventListener('click', function () { answer(i); });
       quizOpts.appendChild(b);
     });
-    quiz.hidden = false; tall(true);
     var first = quizOpts.querySelector('button'); if (first) first.focus();
   }
   function answer(i) {
     if (answered) return;
-    answered = true;
-    var right = i === CS.dx, btns = quizOpts.querySelectorAll('button');
+    var st = Q.steps[Q.i];
+    if (st.done) return; st.done = true;
+    var right = i === st.ans, btns = quizOpts.querySelectorAll('.quiz-opt');
     btns.forEach(function (b, k) {
       b.disabled = true;
-      if (k === CS.dx) b.classList.add('is-right');
+      if (k === st.ans) b.classList.add('is-right');
       else if (k === i) b.classList.add('is-wrong');
     });
-    if (right) sfx.right(); else sfx.wrong();
-    quizExp.textContent = (right ? 'Correct! ' : 'Not quite. It is ' + DX[CS.dx].toLowerCase() + '. ') + CS.why;
+    if (right) { sfx.right(); Q.right++; } else sfx.wrong();
+    if (st.after) st.after();
+    var last = Q.i === Q.steps.length - 1;
+    var want = st.keepCase ? st.opts[st.ans] : st.opts[st.ans].toLowerCase();
+    var lead = right ? 'Correct! ' : 'Not quite. It is ' + want + '. ';
+    quizExp.textContent = lead + (last ? CS.why + ' You read ' + Q.right + ' of ' + Q.steps.length + ' steps right.' : st.fb);
     quizExp.hidden = false;
-    startBtn.textContent = 'Next patient'; startBtn.hidden = false;
-    fullBtn.hidden = false; if (eaBtn) eaBtn.hidden = !eaUrl;
-    startBtn.focus();
+    if (last) {
+      answered = true;
+      startBtn.textContent = 'Next patient'; startBtn.hidden = false;
+      fullBtn.hidden = false; if (eaBtn) eaBtn.hidden = !eaUrl;
+      startBtn.focus();
+      return;
+    }
+    var nx = document.createElement('button');
+    nx.type = 'button'; nx.className = 'btn btn-yellow quiz-next'; nx.textContent = 'Next step';
+    nx.addEventListener('click', function () { Q.i++; quizExp.hidden = true; showStep(); });
+    quizOpts.appendChild(nx); nx.focus();
   }
   function frame(ts) {
     if (!S.on) return;
@@ -287,7 +445,7 @@
     S.time -= dt; S.spawn -= dt;
     var rate = Math.max(0.42, 0.9 - (30 - S.time) * 0.018);
     if (S.spawn <= 0) { spawn(); S.spawn = rate; }
-    S.ph += (7.40 - S.ph) * 0.12 * dt;
+    compensate((7.40 - S.ph) * 0.12 * dt);
     S.lungCd = Math.max(0, S.lungCd - dt); S.kid = Math.min(CS.kid, S.kid + dt);
     if (padB) padB.style.setProperty('--charge', Math.round(S.kid / CS.kid * 100) + '%');
     if (padA) padA.style.setProperty('--charge', Math.round((1 - S.lungCd / Math.max(0.01, CS.lung)) * 100) + '%');
@@ -295,7 +453,10 @@
     for (var i = S.ions.length - 1; i >= 0; i--) {
       var o = S.ions[i]; o.x -= o.v * dt; o.wob += dt * 3;
       if (o.x - o.r < ZONE) {
-        S.ph += o.acid ? -0.06 : 0.06;
+        if (o.acid && CS.resp) { S.r += 0.06; if (LIVE) LIVE.flash('co2', 'CO2 retained', '#FF6978'); }
+        else if (o.acid) { S.m -= 0.06; if (LIVE) LIVE.flash('hco3', 'HCO3 used up', '#FF6978'); }
+        else { S.m += 0.06; if (LIVE) LIVE.flash('hco3', 'HCO3 added', '#55C9F4'); }
+        S.ph = 7.40 + S.m - S.r;
         S.fx.push({ kind: 'text', x: ZONE + 34, y: o.y, t: 0, txt: o.acid ? '-0.06 pH' : '+0.06 pH', col: o.acid ? '#FF6978' : '#55C9F4' });
         flash(o.acid); sfx.leak(o.acid);
         S.ions.splice(i, 1);

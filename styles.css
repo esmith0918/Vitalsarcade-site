@@ -106,6 +106,33 @@ kbd{font-family:var(--f-mono);font-size:.85em;padding:1px 6px;border-radius:5px;
 .gauge-needle{position:absolute;top:-6px;bottom:-6px;width:4px;margin-left:-2px;left:60%;background:#fff;border-radius:2px;box-shadow:0 0 8px rgba(255,255,255,.7);transition:left .12s linear}
 .gauge-scale{display:flex;justify-content:space-between;font:11px/1 var(--f-mono);color:var(--muted);margin-top:8px}
 .hud-stats{display:flex;gap:18px;text-align:right}
+/* ABA-BAB ABG panel: pH, PaCO2 and HCO3 bars. Low side on the left, high side on the right, normal zone in the middle.
+   Letters follow ABA-BAB: pH A..B, PaCO2 B..A (more CO2 = more acid), HCO3 A..B. */
+.abg-live{min-width:0}
+.abg-chart{display:flex;flex-direction:column;gap:5px;width:100%}
+.abg-row{display:grid;grid-template-columns:52px 14px minmax(0,1fr) 14px 44px;align-items:center;gap:6px;font:600 11px/1 var(--f-mono);color:var(--muted);border-radius:6px;transition:background .25s}
+.abg-name{letter-spacing:1px;text-align:left}
+.abg-l,.abg-r{font:700 13px/1 var(--f-mono);text-align:center;opacity:.45;transition:opacity .15s,transform .15s}
+.abg-l.on,.abg-r.on{opacity:1;transform:scale(1.25)}
+.abg-a{color:var(--acid)}.abg-b{color:var(--base)}
+.abg-bar{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--lc),#33444C 38%,#33444C 62%,var(--rc))}
+.abg-norm{position:absolute;top:-3px;bottom:-3px;left:40%;width:20%;border:2px solid var(--accent);border-radius:4px}
+.abg-mid{position:absolute;top:-1px;bottom:-1px;left:50%;width:1px;background:rgba(57,244,161,.55)}
+.abg-mark{position:absolute;top:-5px;bottom:-5px;width:4px;margin-left:-2px;left:50%;background:#fff;border-radius:2px;box-shadow:0 0 8px rgba(255,255,255,.7);transition:left .12s linear}
+.abg-val{font:700 13px/1 var(--f-mono);color:var(--text);text-align:right;font-variant-numeric:tabular-nums}
+.abg-tag{position:absolute;right:4px;top:50%;transform:translateY(-50%);font:700 10px/1 var(--f-mono);white-space:nowrap;padding:2px 6px;border-radius:4px;background:rgba(5,13,18,.88);opacity:0;transition:opacity .2s;pointer-events:none}
+.abg-row.pulse{background:rgba(255,209,102,.12)}
+.abg-row.pulse .abg-tag{opacity:1}
+.abg-row.match{background:rgba(57,244,161,.14)}
+.abg-row.match .abg-name{color:var(--accent)}
+.abg-read{font:600 11px/1.3 var(--f-mono);color:var(--soft);margin-top:6px;letter-spacing:.5px}
+.abg-chart-quiz{max-width:400px;background:rgba(241,248,250,.05);border:1px solid #2E5260;border-radius:10px;padding:10px 10px 8px}
+.abg-chart-quiz .abg-row{text-align:left}
+.quiz-step{font:600 12px/1 var(--f-mono)!important;letter-spacing:2px;color:var(--highlight)!important;margin:0}
+.quiz-opts.two{grid-template-columns:1fr 1fr}
+.quiz-opts.three{grid-template-columns:1fr}
+.quiz-fb{font-size:14px;text-align:left;color:var(--soft)}
+
 .hud-num{font:700 26px/1 var(--f-mono);font-variant-numeric:tabular-nums}
 .stage{position:relative}
 #game{display:block;width:100%;height:360px;touch-action:manipulation;cursor:crosshair}
@@ -160,6 +187,7 @@ kbd{font-family:var(--f-mono);font-size:.85em;padding:1px 6px;border-radius:5px;
 @media (max-width:560px){
   .hud{grid-template-columns:auto auto;row-gap:12px}
   .gauge{grid-column:1 / -1;order:3}
+  .abg-live{grid-column:1 / -1;order:3}
   #game{height:300px}
   .cabinet{padding:8px;border-radius:18px}
   .pad kbd{display:none}
@@ -268,3 +296,4 @@ kbd{font-family:var(--f-mono);font-size:.85em;padding:1px 6px;border-radius:5px;
   html{scroll-behavior:auto}
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
+.quiz-next{grid-column:1 / -1;justify-self:center;min-height:42px;margin-top:4px}
