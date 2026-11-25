@@ -225,6 +225,9 @@ kbd{font-family:var(--f-mono);font-size:.85em;padding:1px 6px;border-radius:5px;
 .game-card.is-featured{outline:3px solid var(--highlight);outline-offset:3px}
 .game-art{position:relative;height:170px}
 .game-art svg{width:100%;height:100%;display:block}
+.game-art img{width:100%;height:100%;display:block;object-fit:cover}
+.game-art.art-phrush{height:auto;aspect-ratio:16/9}
+.game-art.art-phrush .badge{top:auto;bottom:12px}
 .game-art .badge{position:absolute;left:14px;top:14px}
 .art-acid{background:#3A1422}.art-ion{background:#0F3343}.art-heart{background:#2B1520}.art-shift{background:#2E2A14}
 .game-body{padding:20px;display:flex;flex-direction:column;gap:12px;flex:1}
