@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pH Rush: Bloodstream Breakdown (Prototype) | Vitals Arcade</title>
+<link rel="icon" href="assets/logo/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/logo/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="assets/logo/app-icon-180.png">
+<meta name="description" content="Play the pH Rush prototype: pick the right intervention for each acid-base case and keep blood pH in the normal range.">
+<meta name="theme-color" content="#08151C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .rush{padding-top:48px;padding-bottom:var(--space)}
+  .rush h1{font:700 clamp(28px,5vw,44px)/1.1 var(--f-display);margin:0 0 8px}
+  .rush .lead{color:var(--soft);max-width:680px;margin:0 0 22px}
+  .rush-badge{display:inline-block;font:600 13px/1 var(--f-mono);padding:6px 10px;border-radius:99px;background:var(--highlight);color:var(--ink);margin-bottom:14px}
+  .rush-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;margin-bottom:14px;max-width:720px}
+  .rush-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .rush-stat{background:var(--elevated);border-radius:var(--r-sm);padding:10px;text-align:center}
+  .rush-stat b{display:block;font:600 24px/1.2 var(--f-mono)}
+  .rush-stat span{font-size:13px;color:var(--muted)}
+  .rush-gauge{position:relative;height:40px;margin-top:14px;border-radius:var(--r-sm);background:linear-gradient(90deg,#5A1A2C 0%,var(--elevated) 35%,var(--elevated) 65%,#1D4A62 100%);border:1px solid var(--line)}
+  .rush-band{position:absolute;top:0;bottom:0;left:45%;width:20%;background:rgba(57,244,161,.18);border-left:2px dashed var(--accent);border-right:2px dashed var(--accent)}
+  .rush-needle{position:absolute;top:-6px;bottom:-6px;width:4px;border-radius:2px;background:var(--highlight);transform:translateX(-50%);transition:left .15s linear}
+  .rush-scale{display:flex;justify-content:space-between;font:400 12px/1 var(--f-mono);color:var(--muted);margin-top:6px}
+  .rush-tag{display:inline-block;font:600 12px/1 var(--f-mono);padding:5px 9px;border-radius:99px;background:var(--elevated);color:var(--secondary);margin-bottom:10px}
+  .rush-case{font-size:18px;line-height:1.45;margin:0 0 14px}
+  .rush-opts{display:grid;gap:10px}
+  .rush-opt{text-align:left;padding:14px;border-radius:var(--r-md);border:1.5px solid var(--line);background:var(--elevated);color:var(--text);font:500 16px/1.35 var(--f-body);cursor:pointer;min-height:48px}
+  .rush-opt:hover:not(:disabled){border-color:var(--secondary)}
+  .rush-opt:disabled{cursor:default}
+  .rush-opt.right{border-color:var(--accent);background:rgba(57,244,161,.14)}
+  .rush-opt.wrong{border-color:var(--alert);background:rgba(255,105,120,.14)}
+  .rush-feedback{margin-top:12px;color:var(--soft);line-height:1.45;min-height:1.4em}
+  .rush-feedback .ok{color:var(--accent);font-weight:700}
+  .rush-feedback .bad{color:var(--alert);font-weight:700}
+  .rush-note{color:var(--muted);font-size:14px;max-width:720px}
+  .rush .hidden{display:none}
+  @media (max-width:520px){.rush-stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header" id="top">
+  <div class="wrap header-row">
+    <a class="brand" href="index.html" aria-label="Vitals Arcade home">
+      <svg width="36" height="36" viewBox="0 0 100 100" aria-hidden="true"><rect x="32" y="5" width="36" height="90" rx="9" fill="#08151C" stroke="#08151C" stroke-width="9"/><rect x="5" y="32" width="90" height="36" rx="9" fill="#08151C" stroke="#08151C" stroke-width="9"/><rect x="32" y="5" width="36" height="90" rx="9" fill="#55C9F4"/><rect x="5" y="32" width="90" height="36" rx="9" fill="#55C9F4"/><polygon points="50,11 43,20 57,20" fill="#08151C"/><polygon points="50,89 43,80 57,80" fill="#08151C"/><polygon points="11,50 20,43 20,57" fill="#08151C"/><polygon points="89,50 80,43 80,57" fill="#08151C"/><polyline points="27,50 37,50 42,39 49,63 55,30 60,50 73,50" fill="none" stroke="#08151C" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/><polyline points="27,50 37,50 42,39 49,63 55,30 60,50 73,50" fill="none" stroke="#FFD166" stroke-width="5.5" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      <span>VITALS ARCADE</span>
+    </a>
+    <nav class="site-nav" aria-label="Main" style="display:flex;position:static">
+      <a class="nav-cta" href="index.html#games">Back to games</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<section class="rush wrap" aria-labelledby="rush-title">
+  <span class="rush-badge">Prototype</span>
+  <h1 id="rush-title">pH Rush: Bloodstream Breakdown</h1>
+  <p class="lead">Keep blood pH between 7.35 and 7.45 for 120 seconds. Read each case, then pick the intervention that treats the cause.</p>
+
+  <div class="rush-panel">
+    <div class="rush-stats">
+      <div class="rush-stat"><b id="phVal">7.40</b><span>Blood pH</span></div>
+      <div class="rush-stat"><b id="timeVal">120</b><span>Seconds left</span></div>
+      <div class="rush-stat"><b id="scoreVal">0</b><span>Score</span></div>
+      <div class="rush-stat"><b id="streakVal">0</b><span>Streak</span></div>
+    </div>
+    <div class="rush-gauge" role="img" aria-label="Blood pH gauge">
+      <div class="rush-band"></div>
+      <div class="rush-needle" id="needle" style="left:50%"></div>
+    </div>
+    <div class="rush-scale"><span>6.9 acidemia</span><span>7.40</span><span>7.9 alkalemia</span></div>
+  </div>
+
+  <div class="rush-panel" id="gamePanel">
+    <div id="caseArea" class="hidden">
+      <span class="rush-tag" id="caseTag"></span>
+      <p class="rush-case" id="caseText"></p>
+      <div class="rush-opts" id="opts"></div>
+      <div class="rush-feedback" id="feedback" aria-live="polite"></div>
+    </div>
+    <div id="startArea">
+      <p class="rush-case">Cases keep coming, and pH drifts if you wait. Answer correctly to pull it back toward 7.40.</p>
+      <button class="btn btn-yellow" id="startBtn" type="button">Start shift</button>
+    </div>
+  </div>
+
+  <div class="rush-panel hidden" id="endPanel">
+    <p class="rush-case" id="endText"></p>
+    <button class="btn btn-yellow" id="restartBtn" type="button">Run another shift</button>
+  </div>
+
+  <p class="rush-note">Acidosis pushes pH down and alkalosis pushes it up. This is an early prototype and a study aid, not medical advice. Check clinical content against your course materials.</p>
+</section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <p class="footer-brand">VITALS ARCADE</p>
+      <p>Medical science becomes playable. Games are study aids, not medical advice.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="index.html#games">Games</a>
+      <a href="privacy.html">Privacy policy</a>
+      <a href="mailto:hello@vitalsarcade.com">Contact</a>
+    </nav>
+  </div>
+  <p class="wrap copyright">&copy; 2026 Vitals Arcade</p>
+</footer>
+
+<script>
+const CASES = [
+  { tag:"Metabolic acidosis", text:"Type 1 diabetic, glucose 540 mg/dL, ketones positive, deep rapid (Kussmaul) breathing. Which is the priority intervention?", dir:-1,
+    correct:"IV insulin with IV fluids and electrolyte monitoring",
+    wrong:["Oral glucose tablets only","Sodium bicarbonate bolus for every patient with DKA","Restrict all IV fluids to prevent overload"],
+    why:"DKA is driven by insulin deficiency. Insulin stops ketone production and fluids correct dehydration. Bicarbonate is reserved for severe cases." },
+  { tag:"Metabolic alkalosis", text:"Patient with 3 days of persistent vomiting. Labs show low potassium and chloride, and blood pH is rising. What do you give?", dir:+1,
+    correct:"Normal saline and potassium replacement",
+    wrong:["IV sodium bicarbonate","Antacid tablets every hour","Hypotonic fluids with no electrolytes"],
+    why:"Vomiting loses stomach acid (HCl), which raises pH. Chloride-containing saline and potassium restore the losses." },
+  { tag:"Respiratory acidosis", text:"Opioid overdose. RR 6, shallow breathing, sleepy, SpO2 falling. CO2 is building up. What comes first?", dir:-1,
+    correct:"Naloxone and support ventilation with airway management",
+    wrong:["Increase the IV fluid rate","Give a sedative to calm the patient","Encourage the patient to breathe faster on their own"],
+    why:"Retained CO2 lowers pH. Reversing the opioid and restoring ventilation removes the cause." },
+  { tag:"Respiratory alkalosis", text:"Anxious patient breathing fast and deep, reports tingling in fingers, end-tidal CO2 is low. What is the best first action?", dir:+1,
+    correct:"Coach slow breathing and check for a medical cause such as hypoxia or PE",
+    wrong:["Give IV sodium bicarbonate","Increase oxygen to high flow regardless of SpO2","Have the patient hold their breath for a long time"],
+    why:"Hyperventilation blows off CO2 and raises pH. Slowing breathing restores CO2, and you should rule out medical causes before assuming anxiety." },
+  { tag:"Metabolic acidosis", text:"Patient with severe watery diarrhea for 2 days. Bicarbonate is being lost in stool, and labs show a low HCO3. What is the best plan?", dir:-1,
+    correct:"Replace fluid and electrolytes, including bicarbonate-containing fluid as ordered",
+    wrong:["Give a loop diuretic","Stop all fluids until stools slow","Give an opioid antidiarrheal and no fluids"],
+    why:"Diarrhea causes bicarbonate loss, which lowers pH. Replacing fluid and bicarbonate treats the loss." },
+  { tag:"Metabolic alkalosis", text:"Long-term loop diuretic use. Patient has muscle cramps, weakness, and an irregular rhythm. Potassium is 2.8. What is the priority?", dir:+1,
+    correct:"Potassium replacement with cardiac monitoring",
+    wrong:["Sodium bicarbonate infusion","Hypertonic dextrose infusion","Stop all electrolyte monitoring until morning"],
+    why:"Diuretics wash out potassium and chloride, which pushes pH up. Potassium replacement fixes the deficit and protects the heart." },
+  { tag:"Metabolic acidosis", text:"Sepsis with rising lactate. Blood pressure is 84/50, and the patient is confused. What should you prioritize?", dir:-1,
+    correct:"Fluid resuscitation, early antibiotics, and finding the source",
+    wrong:["Oral acetaminophen only","Restrict fluids to avoid edema","Wait for the next scheduled lab draw"],
+    why:"Poor perfusion from sepsis produces lactic acid. Restoring perfusion and treating the infection clear the cause." },
+  { tag:"Respiratory acidosis", text:"COPD patient with a productive cough, CO2 rising, drowsy and confused. Which intervention supports ventilation best?", dir:-1,
+    correct:"Noninvasive ventilation (BiPAP) as ordered, with controlled oxygen",
+    wrong:["Give high-flow oxygen and stop monitoring","Give a sedative to reduce work of breathing","Stop bronchodilators to avoid dependence"],
+    why:"CO2 retention in COPD needs ventilatory support. High oxygen without control can worsen CO2 retention in these patients." }
+];
+
+const CENTER = 7.40, LOW = 6.9, HIGH = 7.9;
+let ph, timeLeft, score, streak, active, running, tickTimer, clockTimer, nextTimer, deck;
+const $ = id => document.getElementById(id);
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function renderGauge(){
+  $("phVal").textContent = ph.toFixed(2);
+  const pct = (ph - LOW) / (HIGH - LOW) * 100;
+  $("needle").style.left = Math.max(0, Math.min(100, pct)) + "%";
+  $("phVal").style.color = (ph >= 7.35 && ph <= 7.45) ? "var(--accent)" : "var(--alert)";
+}
+
+function nextCase(){
+  if(!running) return;
+  if(deck.length === 0) deck = shuffle(CASES.slice());
+  active = deck.pop();
+  $("caseTag").textContent = active.tag;
+  $("caseText").textContent = active.text;
+  $("feedback").textContent = "";
+  const options = shuffle([{t:active.correct, ok:true}, ...active.wrong.map(w=>({t:w, ok:false}))]);
+  const box = $("opts");
+  box.innerHTML = "";
+  options.forEach(o => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "rush-opt";
+    b.textContent = o.t;
+    b.onclick = () => answer(o, b);
+    box.appendChild(b);
+  });
+}
+
+function answer(choice, btn){
+  if(!running || !active) return;
+  const buttons = document.querySelectorAll("#opts button");
+  buttons.forEach(b => b.disabled = true);
+  const current = active;
+  active = null;
+  const fb = $("feedback");
+  fb.textContent = "";
+  const lead = document.createElement("span");
+  if(choice.ok){
+    streak++;
+    score += 10 + Math.min(streak, 5) * 2;
+    ph += -current.dir * 0.15;
+    btn.classList.add("right");
+    lead.className = "ok"; lead.textContent = "Correct. ";
+  } else {
+    streak = 0;
+    ph += current.dir * 0.10;
+    btn.classList.add("wrong");
+    buttons.forEach(b => { if(b.textContent === current.correct) b.classList.add("right"); });
+    lead.className = "bad"; lead.textContent = "Not quite. ";
+  }
+  fb.appendChild(lead);
+  fb.appendChild(document.createTextNode(current.why));
+  $("scoreVal").textContent = Math.round(score);
+  $("streakVal").textContent = streak;
+  renderGauge();
+  checkCrash();
+  if(running){ clearTimeout(nextTimer); nextTimer = setTimeout(nextCase, 2600); }
+}
+
+function tick(){
+  if(!running) return;
+  if(active){ ph += active.dir * 0.0015; } else { ph += (CENTER - ph) * 0.02; }
+  if(ph >= 7.35 && ph <= 7.45) score += 0.2;
+  $("scoreVal").textContent = Math.round(score);
+  renderGauge();
+  checkCrash();
+}
+
+function checkCrash(){
+  if(ph < LOW || ph > HIGH){
+    endGame(false, ph < LOW ? "Acidemia. The patient crashed (pH below 6.9)." : "Alkalemia. The patient crashed (pH above 7.9).");
+  }
+}
+
+function clock(){
+  if(!running) return;
+  timeLeft--;
+  $("timeVal").textContent = timeLeft;
+  if(timeLeft <= 0) endGame(true, "Shift complete. Final score: " + Math.round(score) + ".");
+}
+
+function endGame(survived, msg){
+  if(!running) return;
+  running = false;
+  clearInterval(tickTimer); clearInterval(clockTimer); clearTimeout(nextTimer);
+  $("gamePanel").classList.add("hidden");
+  $("endPanel").classList.remove("hidden");
+  $("endText").textContent = (survived ? "" : "Patient lost. ") + msg;
+}
+
+function start(){
+  ph = 7.40; timeLeft = 120; score = 0; streak = 0; active = null; running = true;
+  deck = shuffle(CASES.slice());
+  $("scoreVal").textContent = "0"; $("streakVal").textContent = "0"; $("timeVal").textContent = "120";
+  $("startArea").classList.add("hidden");
+  $("caseArea").classList.remove("hidden");
+  $("gamePanel").classList.remove("hidden");
+  $("endPanel").classList.add("hidden");
+  renderGauge();
+  tickTimer = setInterval(tick, 100);
+  clockTimer = setInterval(clock, 1000);
+  nextCase();
+}
+
+$("startBtn").onclick = start;
+$("restartBtn").onclick = start;
+ph = 7.40; renderGauge();
+</script>
+</body>
+</html>
